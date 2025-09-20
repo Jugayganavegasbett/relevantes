@@ -4,65 +4,86 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hechos Relevantes</title>
-  <link rel="stylesheet" href="assets/styles.css?v=7"/>
+  <link rel="stylesheet" href="assets/styles.css?v=10"/>
 </head>
 <body>
-  <h1>Hechos Relevantes</h1>
-  <div id="errorBox" hidden style="color:red;font-weight:bold"></div>
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>Hechos Relevantes</h1>
+      <p class="tagline">WhatsApp + Word .docx • Estilo institucional</p>
+    </div>
+  </header>
 
-  <!-- Encabezado -->
-  <section>
-    <h2>1) Encabezado</h2>
-    <input id="fecha" placeholder="Fecha – Hora"/>
-    <input id="pu" placeholder="PU / IPP / NUC"/>
-    <input id="comisaria" placeholder="Dependencia"/>
-    <input id="caratula" placeholder="Carátula"/>
-    <input id="subtitulo" placeholder="Subtítulo"/>
-    <select id="estado">
-      <option value="no">No esclarecido</option>
-      <option value="si">Esclarecido</option>
-    </select>
-  </section>
+  <main class="wrap">
+    <div id="errorBox" class="alert" hidden></div>
 
-  <!-- Personas -->
-  <section>
-    <h2>2) Involucrados</h2>
-    <select id="roles"></select>
-    <button id="agregarPersona">Agregar persona</button>
-    <div id="personas"></div>
-  </section>
+    <section class="card">
+      <h2>1) Encabezado</h2>
+      <div class="grid">
+        <label>Fecha – Hora <input id="fecha" placeholder="20-09-2025 – 17:15 hs"></label>
+        <label>PU / IPP / NUC <input id="pu" placeholder="PU 270840 – IPP 12345"></label>
+        <label>Dependencia <input id="comisaria" placeholder="Sub. Cría. Camet. Mar del Plata"></label>
+        <label>Carátula <input id="caratula" placeholder="Robo agravado en poblado en banda…"></label>
+      </div>
+      <div class="grid">
+        <label>Subtítulo <input id="subtitulo" placeholder="Entradera"></label>
+        <label>Estado
+          <select id="estado">
+            <option value="no">No esclarecido (Rojo)</option>
+            <option value="si">Esclarecido (Azul)</option>
+          </select>
+        </label>
+      </div>
+      <div class="title-preview">
+        <div id="tituloCompuesto" class="titleline">—</div>
+        <div id="subCompuesto" class="subtitleline">—</div>
+      </div>
+    </section>
 
-  <!-- Secuestro -->
-  <section>
-    <h2>3) Secuestro</h2>
-    <textarea id="secuestroTexto" placeholder="Escriba aquí los elementos secuestrados..."></textarea>
-  </section>
+    <section class="card">
+      <h2>2) Involucrados</h2>
+      <div class="row">
+        <select id="roles"></select>
+        <button class="btn" id="agregarPersona">Agregar persona</button>
+      </div>
+      <div id="personas"></div>
+      <p class="hint">Usá en el cuerpo: <code>#victima:0</code>, <code>#imputado:0</code>, etc.</p>
+    </section>
 
-  <!-- Cuerpo -->
-  <section>
-    <h2>4) Cuerpo</h2>
-    <textarea id="cuerpo" placeholder="Redacte el cuerpo usando #victima:0, #secuestro, etc."></textarea>
-  </section>
+    <section class="card">
+      <h2>3) Secuestro (texto libre)</h2>
+      <textarea id="secuestroTexto" rows="3" placeholder="Ej.: Celular iPhone 13, $ 2.000.000 y USD 20.000."></textarea>
+      <p class="hint">Insertalo en el cuerpo con <code>#secuestro</code>. Se enviará en <em>cursiva</em> (y en Word en cursiva + subrayado).</p>
+    </section>
 
-  <!-- Botones -->
-  <div style="margin:20px 0">
-    <button id="generar">Generar vista previa</button>
-    <button id="copiarWACorto">Copiar WA Corta</button>
-    <button id="copiarWALargo">Copiar WA Larga</button>
-    <button id="descargarWord">Descargar Word</button>
-  </div>
+    <section class="card">
+      <h2>4) Cuerpo</h2>
+      <textarea id="cuerpo" rows="10" placeholder="Redactá el cuerpo del hecho. Ej.: &#10;Fecha, siendo las 17:15 hs..., entrevistan con #victima:0..., sustrayendo #secuestro ..."></textarea>
+    </section>
 
-  <!-- Vista previa -->
-  <h3>Vista previa (HTML)</h3>
-  <div id="preview" style="white-space:pre-wrap"></div>
+    <section class="card">
+      <h2>5) Salidas</h2>
+      <div class="row">
+        <button class="btn" id="generar">Generar vista previa</button>
+        <button class="btn ghost" id="copiarWACorto">Copiar WA — Corta</button>
+        <button class="btn ghost" id="copiarWALargo">Copiar WA — Larga</button>
+        <button class="btn success" id="descargarWord">Descargar Word</button>
+      </div>
+      <h3>Vista previa HTML</h3>
+      <div id="preview" class="preview"></div>
+      <h3>WhatsApp — Corta</h3>
+      <pre id="previewWaShort" class="preview wa"></pre>
+      <h3>WhatsApp — Larga</h3>
+      <pre id="previewWaLong" class="preview wa"></pre>
+    </section>
+  </main>
 
-  <h3>WhatsApp Corta</h3>
-  <pre id="previewWaShort"></pre>
-  <h3>WhatsApp Larga</h3>
-  <pre id="previewWaLong"></pre>
+  <footer class="foot">
+    <span>Ctrl + Enter = Generar</span>
+  </footer>
 
   <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
-  <script defer src="assets/templates.js?v=7"></script>
-  <script defer src="assets/app.js?v=7"></script>
+  <script defer src="assets/templates.js?v=10"></script>
+  <script defer src="assets/app.js?v=10"></script>
 </body>
 </html>
