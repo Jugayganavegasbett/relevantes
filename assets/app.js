@@ -33,7 +33,55 @@
     }</tbody></table>`;
   }
 
-  // ===== almacenes de listas =====
+  // ===== Tag helper =====
+  const ROLE_KEYS = ["victima","imputado","denunciante","testigo","pp","aprehendido","detenido","menor","nn","damnificado institucional"];
+  const OBJ_CATS  = ["secuestro","sustraccion","hallazgo","otro"];
+
+  function insertAtCursor(textarea, text){
+    if(!textarea) return;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end   = textarea.selectionEnd   ?? textarea.value.length;
+    const before = textarea.value.slice(0,start);
+    const after  = textarea.value.slice(end);
+    const needsSpace = before && !/\s$/.test(before) ? " " : "";
+    textarea.value = before + needsSpace + text + " " + after;
+    const pos = (before + needsSpace + text + " ").length;
+    textarea.setSelectionRange(pos,pos);
+    textarea.focus();
+  }
+
+  function availableTags(){
+    const tags = new Set();
+    const allPeople = (CIV.store||[]).concat(FZA.store||[]);
+    ROLE_KEYS.forEach(role=>{
+      const arr = allPeople.filter(p => String(p.vinculo||"").toLowerCase() === role);
+      for(let i=0;i<arr.length;i++){ tags.add(`#${role}:${i}`); }
+    });
+    for(let i=0;i<(FZA.store||[]).length;i++){ tags.add(`#pf:${i}`); }
+    if((FZA.store||[]).length){ tags.add(`#pf`); }
+    OBJ_CATS.forEach(cat=>{
+      const arr = (OBJ.store||[]).filter(o => String(o.vinculo||"").toLowerCase()===cat);
+      for(let i=0;i<arr.length;i++){ tags.add(`#${cat}:${i}`); }
+      if(arr.length) tags.add(`#${cat}`);
+    });
+    return Array.from(tags);
+  }
+
+  function renderTagHelper(){
+    const box = document.getElementById("tagHelper");
+    if(!box) return;
+    const tags = availableTags();
+    if(!tags.length){
+      box.innerHTML = `<span class="muted">No hay etiquetas disponibles. Cargá personas/objetos para ver sugerencias.</span>`;
+      return;
+    }
+    box.innerHTML = tags.map(t=>`<button type="button" class="chip" data-tag="${t}">${t}</button>`).join("");
+    box.querySelectorAll("[data-tag]").forEach(btn=>{
+      btn.onclick = ()=> insertAtCursor(document.getElementById("cuerpo"), btn.dataset.tag);
+    });
+  }
+
+  // ===== almacenes =====
   const CIV = { store:[], add(){
       const p = {
         nombre: $("#c_nombre").value, apellido: $("#c_apellido").value, edad: $("#c_edad").value,
@@ -45,7 +93,7 @@
     },
     render(){
       const box=$("#civilesList");
-      if(!this.store.length){ box.innerHTML=""; return; }
+      if(!this.store.length){ box.innerHTML=""; renderTagHelper(); return; }
       box.innerHTML = `<div class="table"><table><thead><tr>
         <th>#</th><th>Vínculo</th><th>Nombre</th><th>Apellido</th><th>Edad</th><th>DNI</th><th>Domicilio</th><th>Acción</th>
       </tr></thead><tbody>${
@@ -58,6 +106,7 @@
         </tr>`).join("")
       }</tbody></table></div>`;
       $$("#civilesList [data-delc]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delc,10),1); this.render(); });
+      renderTagHelper();
     }
   };
 
@@ -72,7 +121,7 @@
     },
     render(){
       const box=$("#fuerzasList");
-      if(!this.store.length){ box.innerHTML=""; return; }
+      if(!this.store.length){ box.innerHTML=""; renderTagHelper(); return; }
       box.innerHTML = `<div class="table"><table><thead><tr>
         <th>#</th><th>Vínculo</th><th>Nombre</th><th>Apellido</th><th>Edad</th><th>Fuerza</th><th>Jerarquía</th><th>Destino</th><th>Acción</th>
       </tr></thead><tbody>${
@@ -84,6 +133,7 @@
         </tr>`).join("")
       }</tbody></table></div>`;
       $$("#fuerzasList [data-delf]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delf,10),1); this.render(); });
+      renderTagHelper();
     }
   };
 
@@ -94,7 +144,7 @@
     },
     render(){
       const box=$("#objetosList");
-      if(!this.store.length){ box.innerHTML=""; return; }
+      if(!this.store.length){ box.innerHTML=""; renderTagHelper(); return; }
       box.innerHTML = `<div class="table"><table><thead><tr>
         <th>#</th><th>Descripción</th><th>Vínculo</th><th>Acción</th>
       </tr></thead><tbody>${
@@ -104,6 +154,7 @@
         </tr>`).join("")
       }</tbody></table></div>`;
       $$("#objetosList [data-delo]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delo,10),1); this.render(); });
+      renderTagHelper();
     }
   };
 
@@ -146,7 +197,7 @@
   bindClick("addFuerza", ()=> FZA.add());
   bindClick("addObjeto", ()=> OBJ.add());
 
-  bindClick("generar",   preview);
+  bindClick("generar",   ()=>{ preview(); });
   document.addEventListener("keydown",(e)=>{ if(e.ctrlKey && e.key==="Enter"){ e.preventDefault(); preview(); } });
 
   bindClick("copiarWA", ()=>{ const out=preview(); navigator.clipboard.writeText(out.waLong).then(()=>alert("Copiado para WhatsApp")); });
@@ -247,10 +298,11 @@
     OBJ.store = (s.objetos||[]).slice(); OBJ.render();
     $("#cuerpo").value  = s.cuerpo||"";
     renderTitlePreview();
+    renderTagHelper();
   }
 
   // inicial
   renderCases();
   renderTitlePreview();
+  renderTagHelper();
 })();
-
