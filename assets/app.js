@@ -8,8 +8,6 @@ const C = window.CATALOG;
 // Fill selects
 const rolesSel = $("#roles");
 C.roles.forEach(r=>{ const o=el("option"); o.textContent=r; rolesSel.appendChild(o); });
-const barrioSel = $("#barrio");
-C.barrios.forEach(b=>{ const o=el("option"); o.textContent=b; barrioSel.appendChild(o); });
 const subTpl = $("#subTpl");
 C.subtitulos.forEach(s=>{ const o=el("option"); o.textContent=s; subTpl.appendChild(o); });
 const snipSel = $("#snippets");
@@ -152,7 +150,7 @@ function save(){
   localStorage.setItem("hr_pro_state", JSON.stringify(state));
 }
 
-// Basic fields save on input
+// Basic fields save on input (incluye 'barrio' como input texto)
 ["fecha","pu","comisaria","caratula","titulo","subtitulo","estado","ufi","juzgado","preventor","lat","lng","barrio"].forEach(id=>{
   const n = $("#"+id); if(!n) return;
   n.value = state[id]||n.value||"";
@@ -199,7 +197,6 @@ function personaByRoleIndex(role, idx){
 function personaHTML(role, idx){
   const p = personaByRoleIndex(role, idx);
   if(!p) return null;
-  // Confidencial: ocultar domicilio y dni
   const tmp = {...p};
   if(state.confidencial){
     tmp.domicilio = tmp.dni = "";
@@ -207,7 +204,6 @@ function personaHTML(role, idx){
   return personaToHTML(tmp);
 }
 function itemDisplay(s){
-  // Compose description
   const parts = [];
   if(s.cant) parts.push(`${s.cant}x`);
   if(s.detalle) parts.push(s.detalle);
@@ -272,20 +268,22 @@ function generar(){
   // Link Maps
   let loc = "";
   const lat = $("#lat").value.trim(), lng = $("#lng").value.trim();
-  const barrio = $("#barrio").value;
+  const barrio = $("#barrio").value.trim();
   if(lat && lng){
     const url = `https://maps.google.com/?q=${encodeURIComponent(lat+","+lng)}`;
-    loc = `\\nUbicación: ${lat}, ${lng} (${barrio||"—"}) — ${url}`;
+    loc = `\nUbicación: ${lat}, ${lng} (${barrio||"—"}) — ${url}`;
+  } else if (barrio){
+    loc = `\nUbicación: ${barrio}`;
   }
 
-  $("#preview").innerHTML = encabezado + "\\n\\n" + cuerpo + loc;
+  $("#preview").innerHTML = encabezado + "\n\n" + cuerpo + loc;
 
   // WA short (encabezado solo + líneas clave)
-  const short = `*${titulo}*\\n_${subtitulo} — ${estado==='si'?'Esclarecido':'No esclarecido'}_`;
+  const short = `*${titulo}*\n_${subtitulo} — ${estado==='si'?'Esclarecido':'No esclarecido'}_`;
   $("#previewWaShort").textContent = short;
 
   // WA long (todo el cuerpo convertido)
-  const long = short + "\\n\\n" + htmlToWA(cuerpo) + (loc?"\\n\\n"+loc:"");
+  const long = short + "\n\n" + htmlToWA(cuerpo) + (loc?"\n\n"+loc:"");
   $("#previewWaLong").textContent = long;
 
   return {titulo, subtitulo, estado, cuerpoHtml: cuerpo, short, long};
@@ -313,7 +311,7 @@ $("#descargarWord").onclick = async ()=>{
   const ufi = $("#ufi").value.trim();
   const juz = $("#juzgado").value.trim();
   const prev = $("#preventor").value.trim();
-  const lat = $("#lat").value.trim(), lng = $("#lng").value.trim(), barrio = $("#barrio").value;
+  const lat = $("#lat").value.trim(), lng = $("#lng").value.trim(), barrio = $("#barrio").value.trim();
 
   function htmlFragToDocx(html){
     const parts = html.split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
@@ -352,6 +350,7 @@ $("#descargarWord").onclick = async ()=>{
   if(juz) children.push(new docx.Paragraph({text:`Juzgado: ${juz}`, style:"Meta"}));
   if(prev) children.push(new docx.Paragraph({text:`Preventor/Móvil: ${prev}`, style:"Meta"}));
   if(lat && lng) children.push(new docx.Paragraph({text:`Ubicación: ${lat}, ${lng} (${barrio||'—'})`, style:"Meta"}));
+  else if (barrio) children.push(new docx.Paragraph({text:`Ubicación: ${barrio}`, style:"Meta"}));
   children.push(new docx.Paragraph({text:""}));
   bodyParas.forEach(p=>children.push(p));
 
@@ -363,13 +362,11 @@ $("#descargarWord").onclick = async ()=>{
   a.click();
 };
 
-// Seed example for test
+// Seed example for test (podés borrar si querés empezar vacío)
 if(!state.personas.length){
   state.personas.push({rol:"Victima", nombre:"Edgardo Marcelo", apellido:"Lemos", edad:"62", nacionalidad:"argentino", domicilio:"Agapantus 1237", ciudad:"Mar del Plata", fallecido:"no"});
 }
 if(!state.secuestros.length){
   state.secuestros.push({tipo:"sustraccion", detalle:"celular IPHONE 13, color blanco", marca:"Apple iPhone 13", serie:"IMEI xxxxx", cant:"1", mon:"ARS", valor:"0"});
-  state.secuestros.push({tipo:"sustraccion", detalle:"dinero en efectivo", cant:"1", mon:"ARS", valor:"2000000"});
-  state.secuestros.push({tipo:"sustraccion", detalle:"dinero", cant:"1", mon:"USD", valor:"20000"});
 }
 save();
