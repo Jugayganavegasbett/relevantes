@@ -3,11 +3,13 @@
  * Requiere opcionalmente: window.docx (docx@^8)
  */
 window.HRFMT = (function(){
+  // ---------- Helpers de formato ----------
   const TitleCase = (s)=> (s||"").toLowerCase().split(/(\s|-)/).map(p=>{
     if(p.trim()===""||p==='-') return p;
     return p.charAt(0).toUpperCase()+p.slice(1);
   }).join("");
 
+  // ---------- Personas ----------
   function peopleByRole(data, role){
     const all = [].concat(data.civiles||[], data.fuerzas||[]);
     return all.filter(p => String(p.vinculo||"").toLowerCase() === role);
@@ -18,16 +20,43 @@ window.HRFMT = (function(){
     return `<strong>${base}${p.edad?` (${p.edad})`:""}${dom.length?` – ${dom.join(", ")}`:""}</strong>`;
   }
 
-  function buildSecuestroHtml(data){
-    const items = (data.objetos||[]).filter(o=> String(o.vinculo||"").toLowerCase()==="secuestro")
-                                    .map(o=>o.descripcion).filter(Boolean);
+  // ---------- Personal de Fuerzas (#pf:N) ----------
+  function forceFmt(p){
+    const base = `${TitleCase(p.nombre||"")} ${TitleCase(p.apellido||"")}`.trim();
+    const edad = p.edad ? ` (${p.edad})` : "";
+    const ficha = [
+      p.fuerza ? TitleCase(p.fuerza) : "",
+      p.jerarquia ? TitleCase(p.jerarquia) : "",
+      p.legajo ? `Legajo ${p.legajo}` : "",
+      p.destino ? `Destino ${TitleCase(p.destino)}` : ""
+    ].filter(Boolean).join(", ");
+    const dom = [TitleCase(p.calle_domicilio||""), TitleCase(p.loc_domicilio||"")].filter(Boolean).join(", ");
+    const cola = [ficha, dom].filter(Boolean).join(" – ");
+    return `<strong>${base}${edad}${cola?` – ${cola}`:""}</strong>`;
+  }
+
+  // ---------- Objetos (por categoría) ----------
+  const OBJ_CATS = ["secuestro","sustraccion","hallazgo","otro"];
+  function objectsByCat(data, cat){
+    const v = (data.objetos||[]);
+    const want = String(cat||"").toLowerCase();
+    return v.filter(o => String(o.vinculo||"").toLowerCase() === want)
+            .map(o => (o.descripcion||"").trim())
+            .filter(Boolean);
+  }
+  function objectFmt(desc){ return `<em><u>${desc}</u></em>`; }
+  function objectsListHtml(data, cat){
+    const items = objectsByCat(data, cat);
     if(!items.length) return "";
     return `<em><u>${items.join("; ")}</u></em>`;
   }
 
+  // ---------- Placeholders ----------
   function applyPlaceholders(body, data){
     if(!body) return "";
     let txt = body;
+
+    // Personas por índice (rol)
     const roles = ["victima","imputado","denunciante","testigo","pp","aprehendido","detenido","menor","nn","damnificado institucional"];
     roles.forEach(role=>{
       const arr = peopleByRole(data, role);
@@ -37,12 +66,43 @@ window.HRFMT = (function(){
         return p ? personFmt(p) : m;
       });
     });
-    const secHtml = buildSecuestroHtml(data);
-    txt = txt.replace(/#secuestro/gi, secHtml);       // solo donde lo pongas
-    txt = txt.replace(/!(.+?)!/g, "<u>$1</u>");       // !subrayado!
+
+    // Personal de fuerzas por índice y comodín
+    if (Array.isArray(data.fuerzas)) {
+      txt = txt.replace(/#pf:(\d+)/gi, (m, idxStr)=>{
+        const idx = parseInt(idxStr, 10);
+        const p = data.fuerzas[idx];
+        return p ? forceFmt(p) : m;
+      });
+      txt = txt.replace(/#pf(?!:)/gi, ()=>{
+        if(!data.fuerzas.length) return "";
+        return data.fuerzas.map(forceFmt).join("; ");
+      });
+    }
+
+    // Objetos por índice
+    OBJ_CATS.forEach(cat=>{
+      const arr = objectsByCat(data, cat);
+      const re = new RegExp(`#${cat}:(\\d+)`,"gi");
+      txt = txt.replace(re, (m,idxStr)=>{
+        const idx = parseInt(idxStr,10);
+        const it = arr[idx];
+        return it ? objectFmt(it) : m;
+      });
+    });
+    // Objetos sin índice (lista completa)
+    OBJ_CATS.forEach(cat=>{
+      const re = new RegExp(`#${cat}(?!:)`,"gi");
+      txt = txt.replace(re, objectsListHtml(data, cat));
+    });
+
+    // Subrayado manual
+    txt = txt.replace(/!(.+?)!/g, "<u>$1</u>");
+
     return txt;
   }
 
+  // ---------- HTML -> WhatsApp ----------
   function htmlToWA(html){
     let s = html||"";
     s = s.replace(/<em><u>(.*?)<\/u><\/em>/gis, '_$1_');
@@ -55,6 +115,7 @@ window.HRFMT = (function(){
     return s.trim();
   }
 
+  // ---------- Títulos ----------
   function buildTitle(data){
     const g = data.generales||{};
     return [g.fecha_hora, g.pu, g.dependencia, g.caratula].filter(Boolean).join(" – ");
@@ -78,10 +139,12 @@ window.HRFMT = (function(){
     return { html, waShort, waLong, forDocx: { titulo: titulo.toUpperCase(), subtitulo: subt, bodyHtml, color: g.esclarecido ? "2e86ff" : "ff4d4d" } };
   }
 
+  // ---------- DOCX (Arial 12, cuerpo justificado pegado) ----------
   async function downloadDocx(data, docxNS){
     const { Document, Packer, TextRun, Paragraph, AlignmentType } = docxNS || {};
     if(!Document) throw new Error("docx no cargada");
     const built = buildAll(data);
+
     const toRuns = (html)=>{
       const parts=(html||"").split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
       let B=false,I=false,U=false; const runs=[];
@@ -96,6 +159,7 @@ window.HRFMT = (function(){
       }
       return runs;
     };
+
     const JUST = AlignmentType.JUSTIFIED;
     const paras = (built.forDocx.bodyHtml||"").split(/\n\n+/).map(p=> new Paragraph({ children: toRuns(p), alignment: JUST, spacing:{after:200} }));
 
@@ -116,11 +180,12 @@ window.HRFMT = (function(){
     a.download=`Hecho_Relevante_${pu}.docx`; a.click();
   }
 
+  // ---------- CSV ----------
   function downloadCSV(list){
-    const header = ["fecha","pu","dependencia","caratula","subtitulo","esclarecido","victimas","imputados","denunciantes","secuestro"];
+    const header = ["fecha","pu","dependencia","caratula","subtitulo","esclarecido","victimas","imputados","denunciantes","secuestro","sustraccion","hallazgo","otro"];
     const rows = [header];
     const getPersons = (data, role)=> peopleByRole(data, role).map(p=>`${TitleCase(p.nombre||"")} ${TitleCase(p.apellido||"")}${p.edad?` (${p.edad})`:""}`.trim()).join(" | ");
-    const getSec = (data)=> (data.objetos||[]).filter(o=>String(o.vinculo||"").toLowerCase()==="secuestro").map(o=>o.descripcion).join(" | ");
+    const getCat = (data, cat)=> objectsByCat(data, cat).join(" | ");
 
     (list||[]).forEach(d=>{
       const g=d.generales||{};
@@ -130,7 +195,10 @@ window.HRFMT = (function(){
         getPersons(d,"victima"),
         getPersons(d,"imputado"),
         getPersons(d,"denunciante"),
-        getSec(d)
+        getCat(d,"secuestro"),
+        getCat(d,"sustraccion"),
+        getCat(d,"hallazgo"),
+        getCat(d,"otro")
       ]);
     });
 
@@ -146,4 +214,3 @@ window.HRFMT = (function(){
 
   return { buildAll, downloadDocx, downloadCSV };
 })();
-
