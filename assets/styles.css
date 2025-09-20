@@ -1,122 +1,58 @@
-/* ============ Base ============ */
 :root{
-  --bg:#f6f7fb;
-  --card:#ffffff;
-  --ink:#1f2937;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --brand:#2563eb;
-  --brand-weak:#e8f0ff;
-  --danger:#ef4444;
-  --success:#16a34a;
-  --badge-red:#ef4444;
-  --badge-blue:#2563eb;
-  --shadow:0 6px 24px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.05);
-  --radius:14px;
+  --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb;
+  --card:#fff; --bg:#f6f7fb; --brand:#2343ff;
+  --ok:#16a34a; --ghost:#eef2ff; --ghost-b:#c7d2fe;
+  --red:#ef4444; --blue:#2563eb;
 }
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  color:var(--ink);
-  background:linear-gradient(180deg,#f9fbff 0%, var(--bg) 100%);
-  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+
+.hero{
+  background:linear-gradient(135deg,#0b1020 0%,#1c2a6e 60%,#2745ff 100%);
+  color:#fff; padding:24px 0; box-shadow:0 6px 24px rgba(0,0,0,.15);
 }
+.hero-inner{max-width:1100px;margin:0 auto;padding:0 16px}
+.hero h1{margin:0;font-size:28px;font-weight:900;letter-spacing:.3px}
+.tagline{margin:6px 0 0;opacity:.85}
 
-h1{
-  font-size:28px; margin:20px auto 6px; font-weight:800; letter-spacing:.2px;
-  max-width:1100px; padding:0 16px;
+.wrap{max-width:1100px;margin:16px auto;padding:0 16px}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin:14px 0;
+  box-shadow:0 8px 30px rgba(2,6,23,.06), 0 2px 10px rgba(2,6,23,.05);
 }
-h2{ font-size:18px; margin:0 0 14px; font-weight:800; letter-spacing:.2px; }
-h3{ font-size:15px; margin:18px 0 8px; font-weight:700; color:var(--muted); }
+h2{margin:0 0 12px;font-size:18px;font-weight:800}
+h3{margin:16px 0 8px;font-size:14px;color:var(--muted);font-weight:700}
 
-/* Error banner */
-#errorBox{
-  max-width:1100px; margin:10px auto; padding:12px 14px;
-  background:#fff5f5; color:#7f1d1d; border:1px solid #fecaca; border-radius:12px;
-}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:6px}
+input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ghost-b);box-shadow:0 0 0 4px var(--ghost)}
+textarea{resize:vertical}
 
-/* Layout sections */
-section{
-  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  max-width:1100px; margin:14px auto; padding:16px;
-}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:10px 14px;color:#fff;background:var(--brand);font-weight:800;cursor:pointer}
+.btn:hover{filter:brightness(1.03)}
+.btn.ghost{background:#fff;color:var(--brand);border:1px solid var(--ghost-b)}
+.btn.success{background:var(--ok)}
 
-/* Inputs */
-input, select, textarea, button{
-  font:inherit;
-}
-input, select, textarea{
-  width:100%; padding:12px 14px; border-radius:12px;
-  border:1px solid var(--line); background:#fff; color:var(--ink);
-  outline:none; transition:box-shadow .15s ease, border-color .15s ease, background .15s ease;
-}
-input::placeholder, textarea::placeholder{ color:#9ca3af }
-input:focus, select:focus, textarea:focus{
-  border-color:#c7d2fe;
-  box-shadow:0 0 0 4px #e0e7ff;
-}
-textarea{ resize:vertical; min-height:120px }
+.preview{white-space:pre-wrap;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
+.preview.wa{background:#fafafa}
+.hint{font-size:12px;color:var(--muted)}
 
-/* Simple grid helpers */
-.item{ border:1px dashed #d7dbe7; border-radius:12px; padding:12px; margin:10px 0; background:#fff }
-.item .line{ display:grid; grid-template-columns:repeat(6, minmax(120px,1fr)); gap:10px }
-.row{ display:flex; align-items:center; gap:10px }
-.small{ font-size:12px; color:var(--muted); margin-top:6px }
+.alert{border:1px solid #fecaca;background:#fff5f5;color:#7f1d1d;border-radius:12px;padding:10px}
 
-/* Roles select + add button area (en Personas) */
-#personas .row{ margin-top:6px }
+.title-preview{margin-top:8px}
+.titleline{font-weight:900}
+.subtitleline{font-weight:800}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid transparent}
+.badge.red{color:#991b1b;background:#fee2e2;border-color:#fecaca}
+.badge.blue{color:#1e3a8a;background:#e0e7ff;border-color:#c7d2fe}
 
-/* Buttons */
-button{
-  border:none; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:700;
-  background:var(--brand); color:#fff; transition:transform .05s ease, filter .15s ease;
-}
-button:hover{ filter:brightness(1.03) }
-button:active{ transform:translateY(1px) }
-button.outline{
-  background:#fff; color:var(--brand); border:1px solid #c7d2fe;
-}
-button.success{ background:var(--success) }
+.item{border:1px dashed #d7dbe7;border-radius:12px;padding:12px;margin:10px 0}
+.item .line{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px}
+.small{font-size:12px;color:var(--muted);margin-top:6px}
 
-/* Badge estado (rojo/azul) para la vista previa HTML */
-.badge{
-  display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; margin-left:8px;
-  vertical-align:middle; transform:translateY(-1px);
-}
-.badge.red{ color:#991b1b; background:#fee2e2; border:1px solid #fecaca }
-.badge.blue{ color:#1e3a8a; background:#e0e7ff; border:1px solid #c7d2fe }
-
-/* Previews */
-pre, #preview{
-  background:#ffffff; border:1px solid var(--line); border-radius:12px; padding:14px;
-  white-space:pre-wrap; line-height:1.6; box-shadow:var(--shadow);
-}
-#preview{ background:#fcfdff }
-
-/* Tiny header for field groups in simple layout */
-section h2 + *{ margin-top:6px }
-
-/* Compact inputs row on top sections */
-section input, section select{ margin-bottom:10px }
-
-/* Make labels nice if you wrap them (optional) */
-label{ display:block; font-size:12px; color:var(--muted); margin:8px 0 6px }
-
-/* Utilities for bold/italic/underline rendering preview parity */
-strong{ font-weight:800 }
-em{ font-style:italic }
-u{ text-decoration:underline }
-
-/* Buttons block under editor */
-div[style*="margin:20px 0"]{
-  max-width:1100px; margin:20px auto; padding:0 16px; display:flex; flex-wrap:wrap; gap:10px;
-}
-
-/* Responsive tweaks */
-@media (max-width: 680px){
-  .item .line{ grid-template-columns:1fr 1fr }
-  div[style*="margin:20px 0"]{ justify-content:stretch }
-}
+.foot{color:#64748b;text-align:center;padding:18px}
+strong{font-weight:900} em{font-style:italic} u{text-decoration:underline}
