@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hechos Relevantes</title>
-  <link rel="stylesheet" href="assets/styles.css?v=2"/>
-  <link rel="stylesheet" href="assets/tabs.css?v=2"/>
+  <link rel="stylesheet" href="assets/styles.css?v=3"/>
+  <link rel="stylesheet" href="assets/tabs.css?v=3"/>
 </head>
 <body>
   <header class="hero">
@@ -163,10 +163,12 @@
     <!-- Cuerpo -->
     <section class="card">
       <h2>2) Resumen / Cuerpo</h2>
-      <textarea id="cuerpo" rows="10" placeholder="Redactá el cuerpo. Ej.: &#10;Fecha... entrevistan con #victima:0 ... sustrayendo #secuestro ..."></textarea>
+      <textarea id="cuerpo" rows="10" placeholder="Redactá el cuerpo. Ej.: &#10;Fecha... entrevistan con #victima:0 ... sustrayendo #secuestro:0 ..."></textarea>
       <p class="hint">
-        Estilos rápidos: <code>*negrita*</code>, <code>_itálica_</code> (se usa en secuestro), <code>!subrayado!</code>.
+        Estilos rápidos: <code>*negrita*</code>, <code>_itálica_</code> (se usa en objetos), <code>!subrayado!</code>.
       </p>
+      <!-- Asistente de etiquetas -->
+      <div id="tagHelper" class="chips"></div>
     </section>
 
     <!-- Salidas -->
@@ -186,9 +188,9 @@
   <footer class="foot"><span>Ctrl + Enter = Generar</span></footer>
 
   <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
-  <script defer src="assets/formatter.js?v=2"></script>
-  <script defer src="assets/tabs.js?v=2"></script>
-  <script defer src="assets/app.js?v=2"></script>
+  <script defer src="assets/formatter.js?v=3"></script>
+  <script defer src="assets/tabs.js?v=3"></script>
+  <script defer src="assets/app.js?v=3"></script>
 </body>
 </html>
 
