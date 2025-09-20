@@ -39,6 +39,7 @@ textarea{resize:vertical}
 
 .preview{white-space:pre-wrap;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
 .hint{font-size:12px;color:var(--muted)}
+.small{font-size:12px;color:var(--muted)}
 
 .alert{border:1px solid #fecaca;background:#fff5f5;color:#7f1d1d;border-radius:12px;padding:10px}
 
@@ -49,7 +50,7 @@ textarea{resize:vertical}
 .badge.red{color:#991b1b;background:#fee2e2;border-color:#fecaca}
 .badge.blue{color:#1e3a8a;background:#e0e7ff;border-color:#c7d2fe}
 
-.table{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.table{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
 .table:empty{border:0;padding:0}
 .table table{width:100%;border-collapse:collapse;background:#fff}
 .table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;font-size:13px}
@@ -57,3 +58,4 @@ textarea{resize:vertical}
 
 .foot{color:#64748b;text-align:center;padding:18px}
 strong{font-weight:900} em{font-style:italic} u{text-decoration:underline}
+
