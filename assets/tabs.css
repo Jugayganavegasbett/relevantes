@@ -9,4 +9,3 @@
 .tab.is-active{background:#fff;border-color:var(--line);color:#111827}
 .tab-panel{display:none}
 .tab-panel.is-active{display:block}
-
