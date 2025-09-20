@@ -16,7 +16,7 @@
   function initApp(){
     const C = window.CATALOG || {roles:[], subtitulos:[], snippets:[]};
 
-    // Fill selects
+    // Selects
     const rolesSel = $("#roles");
     C.roles.forEach(r=>{ const o=el("option"); o.textContent=r; rolesSel.appendChild(o); });
 
@@ -68,7 +68,7 @@
       checksWrap.appendChild(lab);
     });
 
-    // Bind basics with autosave (incluye barrio texto)
+    // Bind basics (incluye barrio texto)
     ["fecha","pu","comisaria","caratula","titulo","subtitulo","estado","ufi","juzgado","preventor","lat","lng","barrio"].forEach(id=>{
       const n = $("#"+id); if(!n) return;
       n.value = state[id]||n.value||"";
@@ -78,10 +78,14 @@
     $("#confidencial").onchange = (e)=>{ state.confidencial = e.target.checked; save(); };
     subTpl.onchange = ()=>{ if(subTpl.value) { $("#subtitulo").value = subTpl.options[subTpl.selectedIndex].text; state["subtitulo"] = $("#subtitulo").value; save(); } };
 
-    // Personas
+    // Personas — AHORA EN HTML SOLO **NEGRITA** (para que en WA salga entre * *)
     function personaToHTML(p){
-      const base = `${p.nombre||""} ${p.apellido||""}${p.edad?` (${p.edad})`:""}${p.nacionalidad?` – ${p.nacionalidad}`:""}${p.domicilio?` – ${p.domicilio}`:""}${p.ciudad?`, ${p.ciudad}`:""}${p.fallecido==="si"?" – FALLECIDO":""}`.trim();
-      return `<strong><em>${base}</em></strong>`;
+      const base = `${p.nombre||""} ${p.apellido||""}`.trim()
+        + `${p.edad?` (${p.edad})`:""}`
+        + `${p.domicilio?` – ${p.domicilio}`:""}`
+        + `${p.ciudad?`, ${p.ciudad}`:""}`;
+      // Solo <strong> (nada de <em>)
+      return `<strong>${base}</strong>`;
     }
     function renderPersonas(){
       const wrap = $("#personas"); wrap.innerHTML="";
@@ -96,7 +100,7 @@
             <input data-k="nombre" placeholder="Nombre" value="${p.nombre||''}"/>
             <input data-k="apellido" placeholder="Apellido" value="${p.apellido||''}"/>
             <input data-k="edad" placeholder="Edad" value="${p.edad||''}"/>
-            <input data-k="nacionalidad" placeholder="Nacionalidad" value="${p.nacionalidad||''}"/>
+            <input data-k="nacionalidad" placeholder="Nacionalidad (no se usa en WA)" value="${p.nacionalidad||''}"/>
             <select data-k="fallecido">
               <option value="no" ${p.fallecido!=="si"?'selected':''}>Fallecido: No</option>
               <option value="si" ${p.fallecido==="si"?'selected':''}>Fallecido: Sí</option>
@@ -119,7 +123,6 @@
         wrap.appendChild(item);
       });
     }
-
     function addPersona(obj){
       state.personas.push({
         rol: obj.rol || (rolesSel.value || C.roles[0] || "Victima"),
@@ -129,7 +132,6 @@
       });
       save(); renderPersonas();
     }
-
     $("#agregarPersona").onclick = ()=> addPersona({});
 
     // Modal Persona
@@ -148,7 +150,7 @@
       dlgP.close();
     };
 
-    // Secuestros
+    // Secuestros — AHORA SOLO <em> (para que en WA salga _cursiva_)
     function renderSecuestros(){
       const wrap = $("#secuestros"); wrap.innerHTML="";
       state.secuestros.forEach((s,idx)=>{
@@ -263,7 +265,8 @@
         const str = s.mon==="ARS" ? `$${n.toLocaleString('es-AR')}` : `USD ${n.toLocaleString('es-AR')}`;
         desc += ` (${str}${s.cant?` c/u`:``})`;
       }
-      return `<em><u>${desc}</u></em>`;
+      // Solo cursiva (sin subrayado)
+      return `<em>${desc}</em>`;
     }
     function replacePlaceholders(text){
       const missing = new Set();
@@ -295,11 +298,13 @@
       } else warn.hidden = true;
       return text;
     }
+
+    // Conversión a WhatsApp
     function htmlToWA(html){
       return html
-        .replace(/<strong>(.*?)<\/strong>/g, (m,p1)=>`*${p1}*`)
-        .replace(/<em>(.*?)<\/em>/g, (m,p1)=>`_${p1}_`)
-        .replace(/<u>(.*?)<\/u>/g, (m,p1)=>`_${p1}_`)
+        .replace(/<strong>(.*?)<\/strong>/g, (m,p1)=>`*${p1}*`) // negrita
+        .replace(/<em>(.*?)<\/em>/g, (m,p1)=>`_${p1}_`)        // cursiva
+        .replace(/<u>(.*?)<\/u>/g, (m,p1)=>`_${p1}_`)          // (si quedara algún subrayado, también cursiva)
         .replace(/<[^>]+>/g,"");
     }
 
@@ -307,10 +312,10 @@
     function generar(){
       const titulo = $("#titulo").value.trim();
       const subtitulo = $("#subtitulo").value.trim();
-      const estado = $("#estado").value;
+      const estado = $("#estado").value; // solo para color del DOCX
       const cuerpo = replacePlaceholders($("#cuerpo").value.trim());
 
-      const subtBadge = `<span class="badge ${estado==='si'?'blue':'red'}">${subtitulo} — ${estado==='si'?'Esclarecido':'No esclarecido'}</span>`;
+      const subtBadge = `<span class="badge ${estado==='si'?'blue':'red'}">${subtitulo}</span>`;
       const encabezado = `<strong>${titulo}</strong> ${subtBadge}`;
 
       // Ubicación
@@ -326,7 +331,8 @@
 
       $("#preview").innerHTML = encabezado + "\n\n" + cuerpo + loc;
 
-      const short = `*${titulo}*\n_${subtitulo} — ${estado==='si'?'Esclarecido':'No esclarecido'}_`;
+      // WhatsApp — SIN “Esclarecido/No esclarecido”
+      const short = `*${titulo}*\n*${subtitulo}*`;
       $("#previewWaShort").textContent = short;
       const long = short + "\n\n" + htmlToWA(cuerpo) + (loc?"\n\n"+loc:"");
       $("#previewWaLong").textContent = long;
@@ -343,7 +349,7 @@
       if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==="c"){ e.preventDefault(); $("#copiarWACorto").click(); }
     });
 
-    // DOCX
+    // DOCX — FIX: usar addSection({children}) en vez de new Section(...)
     $("#descargarWord").onclick = async ()=>{
       safe(async ()=>{
         const d = generar();
@@ -383,7 +389,7 @@
 
         const children = [
           new docxLib.Paragraph({text:d.titulo, style:"H"}),
-          new docxLib.Paragraph({text:`${d.subtitulo} — ${d.estado==='si'?'Esclarecido':'No esclarecido'}`, style:"S"}),
+          new docxLib.Paragraph({text:`${d.subtitulo}`, style:"S"}), // sin “Esclarecido/No esclarecido”
           new docxLib.Paragraph({text:`Fecha/Hora: ${fecha}`, style:"Meta"}),
           new docxLib.Paragraph({text:`PU/IPP: ${pu}`, style:"Meta"}),
           new docxLib.Paragraph({text:`Dependencia: ${comisaria}`, style:"Meta"}),
@@ -397,7 +403,8 @@
         children.push(new docxLib.Paragraph({text:""}));
         bodyParas.forEach(p=>children.push(p));
 
-        doc.addSection(new docxLib.Section({children}));
+        // ✅ FIX aquí:
+        doc.addSection({children});
         const blob = await docxLib.Packer.toBlob(doc);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -406,10 +413,9 @@
       });
     };
 
-    // Seed mínimo (podés borrar si querés vacío)
-    if(!state.personas.length){ state.personas.push({rol:"Victima", nombre:"Edgardo Marcelo", apellido:"Lemos", edad:"62", nacionalidad:"argentino", domicilio:"Agapantus 1237", ciudad:"Mar del Plata", fallecido:"no"}); }
+    // Seed mínimo (podés borrar)
+    if(!state.personas.length){ state.personas.push({rol:"Victima", nombre:"Edgardo Marcelo", apellido:"Lemos", edad:"62", domicilio:"Agapantus 1237", ciudad:"Mar del Plata", fallecido:"no"}); }
     renderPersonas();
-
     if(!state.secuestros.length){ state.secuestros.push({tipo:"sustraccion", detalle:"celular IPHONE 13, color blanco", marca:"Apple iPhone 13", serie:"IMEI xxxxx", cant:"1", mon:"", valor:""}); }
     renderSecuestros();
   }
