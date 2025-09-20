@@ -38,9 +38,8 @@ window.HRFMT = (function(){
       });
     });
     const secHtml = buildSecuestroHtml(data);
-    txt = txt.replace(/#secuestro/gi, secHtml); // solo donde lo pongas
-    // soporte opcional: !subrayado! -> <u>subrayado</u>
-    txt = txt.replace(/!(.+?)!/g, "<u>$1</u>");
+    txt = txt.replace(/#secuestro/gi, secHtml);       // solo donde lo pongas
+    txt = txt.replace(/!(.+?)!/g, "<u>$1</u>");       // !subrayado!
     return txt;
   }
 
