@@ -1,135 +1,55 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Hechos Relevantes — PRO</title>
-  <link rel="stylesheet" href="assets/styles.css"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
-  <script defer src="assets/templates.js"></script>
-  <script defer src="assets/app.js"></script>
-</head>
-<body>
-  <header class="topbar">
-    <div>
-      <h1>Hechos Relevantes — PRO</h1>
-      <div class="subtitle">Front-end puro • GitHub Pages • Autoguardado • DOCX • WhatsApp</div>
-    </div>
-    <div class="actions">
-      <button class="btn small outline" id="guardarSnap">Guardar versión</button>
-      <select id="snapshots" title="Versiones guardadas"></select>
-      <button class="btn small outline" id="restaurarSnap">Restaurar</button>
-    </div>
-  </header>
+*{box-sizing:border-box}
+:root{
+  --bg:#0b1020; --card:#121933; --muted:#9fb0ff; --fg:#e9edff;
+  --accent:#6ea8ff; --ok:#2ecc71; --outline:#394577; --red:#ff4d4d; --blue:#2e86ff;
+}
+html,body{margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--fg)}
+.topbar{padding:16px 20px;border-bottom:1px solid var(--outline);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#0d142a,#0b1020)}
+.topbar h1{margin:0;font-size:20px}
+.subtitle{color:var(--muted);font-size:12px;margin-top:4px}
+.actions{display:flex;gap:8px;align-items:center}
+.container{max-width:1150px;margin:20px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--outline);border-radius:16px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row.end{justify-content:flex-end}
+.grow{flex:1}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:6px}
+input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;background:#0e1430;border:1px solid #26315e;color:var(--fg)}
+textarea{resize:vertical}
+.hint{color:var(--muted);font-size:12px;margin:-6px 0 8px}
+.btn{background:var(--accent);border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+.btn.small{padding:8px 10px;font-size:12px}
+.btn:hover{opacity:.95}
+.btn.outline{background:transparent;border:1px solid var(--accent);color:var(--fg)}
+.btn.success{background:var(--ok)}
+.item{border:1px dashed #2a3565;border-radius:12px;padding:12px;margin:10px 0}
+.item .line{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.item .line > *{min-width:0}
+.small{font-size:12px;color:var(--muted)}
+.preview{white-space:pre-wrap;background:#0f1531;border:1px solid #2a3565;border-radius:12px;padding:12px;margin-top:12px}
+.preview.wa{white-space:pre-wrap;background:#0a0f24}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;margin-left:6px}
+.badge.red{background:rgba(255,77,77,.15);color:var(--red)}
+.badge.blue{background:rgba(46,134,255,.15);color:var(--blue)}
+.foot{color:#8ea0ff55;text-align:center;padding:20px}
+strong{font-weight:700}
+em{font-style:italic}
+u{text-decoration:underline}
+.toggle{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.warn{border:1px solid var(--red);background:rgba(255,77,77,.08);color:#ffd1d1;padding:10px;border-radius:8px;margin-bottom:12px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.checks label{flex-direction:row;align-items:center;gap:8px}
+.totales{display:flex;gap:16px;font-size:14px;color:#cbd6ff}
 
-  <main class="container">
-    <section class="card">
-      <div class="flex-between">
-        <h2>1) Encabezado</h2>
-        <label class="toggle">
-          <input type="checkbox" id="confidencial"/>
-          <span>Modo confidencial</span>
-        </label>
-      </div>
-      <div class="grid">
-        <label>Fecha y hora <input id="fecha" placeholder="20-09-2025 – 17:15 hs"/></label>
-        <label>PU / IPP / NUC <input id="pu" placeholder="PU 270840 • IPP 12345"/></label>
-        <label>Dependencia <input id="comisaria" placeholder="SUB. CRIA. CAMET. MAR DEL PLATA"/></label>
-        <label>Carátula <input id="caratula" placeholder="Robo agravado..."/></label>
-      </div>
-      <div class="grid">
-        <label>Título (negrita) <input id="titulo" placeholder="ROBO AGRAVADO..."/></label>
-        <label>Subtítulo
-          <div class="row">
-            <input id="subtitulo" class="grow" placeholder="Entradera"/>
-            <select id="subTpl">
-              <option value="">Plantillas Subtítulo…</option>
-            </select>
-          </div>
-        </label>
-        <label>Estado
-          <select id="estado">
-            <option value="no">No esclarecido (Rojo)</option>
-            <option value="si">Esclarecido (Azul)</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid">
-        <label>UFI / Intervención <input id="ufi" placeholder="UFI Nº …"/></label>
-        <label>Juzgado <input id="juzgado" placeholder="Juzgado de Garantías Nº …"/></label>
-        <label>Preventor / Móvil <input id="preventor" placeholder="Of. … / Móvil …"/></label>
-      </div>
-      <div class="grid">
-        <label>Latitud <input id="lat" placeholder="-38.0"/></label>
-        <label>Longitud <input id="lng" placeholder="-57.5"/></label>
-        <label>Barrio / Sector <input id="barrio" placeholder="La Aurelia, Constitución, etc."/></label>
-      </div>
-    </section>
+/* Dialogs */
+.dlg::backdrop{background:rgba(0,0,0,.45)}
+.dlg{border:none;border-radius:14px;padding:0}
+.dlg-card{background:var(--card);border:1px solid var(--outline);border-radius:14px;padding:16px;min-width:min(780px,92vw)}
 
-    <section class="card">
-      <div class="flex-between">
-        <h2>2) Texto del hecho</h2>
-        <div class="row">
-          <select id="snippets"></select>
-          <button class="btn small outline" id="insertSnippet">Insertar</button>
-        </div>
-      </div>
-      <p class="hint">
-        Placeholders: <code>#victima:0</code>, <code>#imputado:0</code>, <code>#denunciante:0</code>, <code>#testigo:0</code>, <code>#pp:0</code>.
-        Ítems: <code>#secuestro:0</code>, <code>#sustraccion:todos</code>, <code>#recupero:0</code>.
-      </p>
-      <textarea id="cuerpo" rows="10" placeholder="Redactá y usá #placeholders en el texto…"></textarea>
-      <div id="placeholdersWarn" class="warn" hidden>Hay placeholders sin datos: <span id="warnList"></span></div>
-    </section>
-
-    <section class="card">
-      <div class="flex-between">
-        <h2>3) Involucrados</h2>
-        <div class="row">
-          <select id="roles"></select>
-          <button class="btn small" id="agregarPersona">+ Agregar</button>
-        </div>
-      </div>
-      <div id="personas"></div>
-    </section>
-
-    <section class="card">
-      <div class="flex-between">
-        <h2>4) Objetos (Secuestro / Sustracción / Recupero)</h2>
-        <button class="btn small" id="agregarSecuestro">+ Agregar</button>
-      </div>
-      <div id="secuestros"></div>
-      <div class="totales">
-        <div>Total ARS: <strong id="totARS">$0</strong></div>
-        <div>Total USD: <strong id="totUSD">USD 0</strong></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>5) Checklist de cierre</h2>
-      <div id="checklist" class="checks"></div>
-    </section>
-
-    <section class="card">
-      <h2>6) Salidas</h2>
-      <div class="btns">
-        <button class="btn" id="generar">Generar</button>
-        <button class="btn outline" id="copiarWACorto">Copiar WA — Corta</button>
-        <button class="btn outline" id="copiarWALargo">Copiar WA — Larga</button>
-        <button class="btn success" id="descargarWord">Descargar .docx</button>
-      </div>
-      <div id="preview" class="preview"></div>
-      <h3>Vista WhatsApp (corta)</h3>
-      <pre id="previewWaShort" class="preview wa"></pre>
-      <h3>Vista WhatsApp (larga)</h3>
-      <pre id="previewWaLong" class="preview wa"></pre>
-    </section>
-  </main>
-
-  <footer class="foot">Atajos: Ctrl+Enter = Generar • Ctrl+S = Guardar versión • Ctrl+Shift+C = Copiar WA Corta</footer>
-
-</body>
-</html>
+@media print{
+  body{background:#fff;color:#000}
+  .topbar,.foot,.btns,.subtitle{display:none}
+  .card{border:none}
+}
 
