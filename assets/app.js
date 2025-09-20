@@ -3,6 +3,13 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
   const showErr = m => { const b=$("#errorBox"); if(b){ b.textContent="Error: "+m; b.hidden=false; } };
 
+  // === helper: bind seguro (no rompe si falta el botón)
+  function bindClick(id, handler){
+    const n = document.getElementById(id);
+    if (n) n.onclick = handler;
+    return !!n;
+  }
+
   const CASEKEY="hr_cases_v1";
 
   const TitleCase = (s)=> (s||"").toLowerCase().split(/(\s|-)/).map(p=>{
@@ -26,26 +33,8 @@
     }</tbody></table>`;
   }
 
-  function collectData(){
-    const generales = {
-      fecha_hora: $("#g_fecha").value.trim(),
-      pu: $("#g_pu").value.trim(),
-      dependencia: $("#g_dep").value.trim(),
-      caratula: $("#g_car").value.trim(),
-      subtitulo: $("#g_sub").value.trim(),
-      esclarecido: $("#g_ok").value==="si"
-    };
-    const civiles = CIV.store.slice();
-    const fuerzas = FZA.store.slice();
-    const objetos = OBJ.store.slice();
-    const cuerpo = $("#cuerpo").value;
-    return { generales, civiles, fuerzas, objetos, cuerpo };
-  }
-
-  // ===== CIVILES =====
-  const CIV = {
-    store: [],
-    add(){
+  // ===== almacenes de listas =====
+  const CIV = { store:[], add(){
       const p = {
         nombre: $("#c_nombre").value, apellido: $("#c_apellido").value, edad: $("#c_edad").value,
         genero: $("#c_genero").value, dni: $("#c_dni").value, pais: $("#c_pais").value,
@@ -72,15 +61,11 @@
     }
   };
 
-  // ===== FUERZAS =====
-  const FZA = {
-    store: [],
-    add(){
+  const FZA = { store:[], add(){
       const p = {
         nombre: $("#f_nombre").value, apellido: $("#f_apellido").value, edad: $("#f_edad").value,
         fuerza: $("#f_fuerza").value, jerarquia: $("#f_jerarquia").value, legajo: $("#f_legajo").value,
-        destino: $("#f_destino").value,
-        loc_domicilio: $("#f_loc").value, calle_domicilio: $("#f_calle").value,
+        destino: $("#f_destino").value, loc_domicilio: $("#f_loc").value, calle_domicilio: $("#f_calle").value,
         vinculo: $("#f_vinculo").value, obito: $("#f_obito").value==="true"
       };
       this.store.push(p); this.render();
@@ -102,10 +87,7 @@
     }
   };
 
-  // ===== OBJETOS =====
-  const OBJ = {
-    store: [],
-    add(){
+  const OBJ = { store:[], add(){
       const o = { descripcion: $("#o_desc").value, vinculo: $("#o_vinc").value };
       if(!o.descripcion.trim()) return;
       this.store.push(o); this.render();
@@ -125,8 +107,7 @@
     }
   };
 
-  // ===== Preview / WA / DOCX / CSV =====
-  function buildDataFromForm(){ // crea objeto del motor
+  function buildDataFromForm(){
     return {
       generales: {
         fecha_hora: $("#g_fecha").value.trim(),
@@ -143,6 +124,16 @@
     };
   }
 
+  function renderTitlePreview(){
+    const t = [$("#g_fecha").value,$("#g_pu").value,$("#g_dep").value,$("#g_car").value].filter(Boolean).join(" – ");
+    const sub = $("#g_sub").value; const ok = ($("#g_ok").value==="si");
+    $("#tituloCompuesto").innerHTML = `<strong>${t.toUpperCase()}</strong>`;
+    $("#subCompuesto").innerHTML = `<span class="badge ${ok?'blue':'red'}"><strong>${sub}</strong></span>`;
+  }
+  ["g_fecha","g_pu","g_dep","g_car","g_sub","g_ok"].forEach(id=>{
+    const n=document.getElementById(id); if(n) n.addEventListener("input", renderTitlePreview);
+  });
+
   function preview(){
     const data = buildDataFromForm();
     const out = HRFMT.buildAll(data);
@@ -150,57 +141,59 @@
     return out;
   }
 
-  // ===== Hooks UI =====
-  $("#addCivil").onclick = ()=> CIV.add();
-  $("#addFuerza").onclick = ()=> FZA.add();
-  $("#addObjeto").onclick = ()=> OBJ.add();
+  // ===== binds seguros =====
+  bindClick("addCivil",  ()=> CIV.add());
+  bindClick("addFuerza", ()=> FZA.add());
+  bindClick("addObjeto", ()=> OBJ.add());
 
-  $("#generar").onclick = preview;
+  bindClick("generar",   preview);
   document.addEventListener("keydown",(e)=>{ if(e.ctrlKey && e.key==="Enter"){ e.preventDefault(); preview(); } });
 
-  $("#copiarWA").onclick = ()=>{ const out=preview(); navigator.clipboard.writeText(out.waLong).then(()=>alert("Copiado para WhatsApp")); };
+  bindClick("copiarWA", ()=>{ const out=preview(); navigator.clipboard.writeText(out.waLong).then(()=>alert("Copiado para WhatsApp")); });
 
-  $("#descargarWord").onclick = async ()=>{
+  bindClick("descargarWord", async ()=>{
     try{ await HRFMT.downloadDocx(buildDataFromForm(), (window.docx||{})); }
     catch(e){ console.error(e); showErr(e.message||e); }
-  };
+  });
 
-  $("#exportCSV1").onclick = ()=>{ HRFMT.downloadCSV([buildDataFromForm()]); };
+  bindClick("exportCSV1", ()=>{ HRFMT.downloadCSV([buildDataFromForm()]); });
 
-  // ===== Casos: guardar / actualizar / borrar / cargar / export múltiple =====
+  // casos
   const selectedRadio = ()=> { const r = document.querySelector('input[name="caseSel"]:checked'); return r ? r.getAttribute("data-id") : null; };
   const selectedChecks = ()=> $$(".caseCheck:checked").map(x=>x.getAttribute("data-id"));
 
-  $("#saveCase").onclick = ()=>{
+  bindClick("saveCase", ()=>{
     const name = ($("#caseName").value||"").trim() || "Hecho sin nombre";
     const snap = buildDataFromForm(); snap.id = freshId(); snap.name=name;
     const cases = getCases(); cases.push(snap); setCases(cases); renderCases(); alert("Guardado.");
-  };
-  $("#updateCase").onclick = ()=>{
+  });
+
+  bindClick("updateCase", ()=>{
     const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para actualizar."); return; }
     const cases = getCases(); const idx = cases.findIndex(c=>c.id===id); if(idx<0){ alert("No encontrado"); return; }
     const snap = buildDataFromForm(); snap.id = id; snap.name = cases[idx].name;
     cases[idx] = snap; setCases(cases); renderCases(); alert("Actualizado.");
-  };
-  $("#deleteCase").onclick = ()=>{
+  });
+
+  bindClick("deleteCase", ()=>{
     const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para borrar."); return; }
     const cases = getCases().filter(c=>c.id!==id); setCases(cases); renderCases();
-  };
-  $("#loadSelected").onclick = ()=>{
+  });
+
+  bindClick("loadSelected", ()=>{
     const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para cargar."); return; }
     const c = getCases().find(x=>x.id===id); if(!c){ alert("No encontrado"); return; }
     loadSnapshot(c); renderCases(); preview(); alert("Cargado.");
-  };
+  });
 
-  $("#exportCSV").onclick = ()=>{
+  bindClick("exportCSV", ()=>{
     const ids = selectedChecks(); if(!ids.length){ alert("Seleccioná al menos un hecho (checkbox)."); return; }
     const list = getCases().filter(c=>ids.includes(c.id));
     HRFMT.downloadCSV(list);
-  };
+  });
 
-  $("#downloadWordMulti").onclick = async ()=>{
+  bindClick("downloadWordMulti", async ()=>{
     const ids = selectedChecks(); if(!ids.length){ alert("Seleccioná al menos un hecho (checkbox)."); return; }
-    // Armamos un DOCX con varios hechos, usando el motor para cada uno
     const docx = window.docx||{}; const { Document, Packer, TextRun, Paragraph, AlignmentType } = docx;
     if(!Document){ showErr("docx no cargada"); return; }
 
@@ -240,7 +233,7 @@
     const blob = await Packer.toBlob(doc);
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download=`Hechos_Relevantes_${new Date().toISOString().slice(0,10)}.docx`; a.click();
-  };
+  });
 
   function loadSnapshot(s){
     $("#g_fecha").value = s.generales?.fecha_hora||"";
@@ -256,16 +249,8 @@
     renderTitlePreview();
   }
 
-  function renderTitlePreview(){
-    const t = [$("#g_fecha").value,$("#g_pu").value,$("#g_dep").value,$("#g_car").value].filter(Boolean).join(" – ");
-    const sub = $("#g_sub").value; const ok = ($("#g_ok").value==="si");
-    $("#tituloCompuesto").innerHTML = `<strong>${t.toUpperCase()}</strong>`;
-    $("#subCompuesto").innerHTML = `<span class="badge ${ok?'blue':'red'}"><strong>${sub}</strong></span>`;
-  }
-  ["g_fecha","g_pu","g_dep","g_car","g_sub","g_ok"].forEach(id=>{
-    const n=$("#"+id); if(n) n.addEventListener("input", renderTitlePreview);
-  });
-
   // inicial
   renderCases();
+  renderTitlePreview();
 })();
+
