@@ -2,62 +2,42 @@
 (function(){
   const $ = (q)=>document.querySelector(q);
   const el = (t,c)=>{const n=document.createElement(t); if(c) n.className=c; return n;};
-  const showErr = (msg)=>{ const b=$("#errorBox"); if(!b) return; b.textContent="Error: "+msg; b.hidden=false; };
+  const showErr = (msg)=>{ const b=$("#errorBox"); if(b){ b.textContent="Error: "+msg; b.hidden=false; } };
   const hideErr = ()=>{ const b=$("#errorBox"); if(b) b.hidden=true; };
 
   const TitleCase = (s)=> (s||"").toLowerCase().split(/(\s|-)/).map(p=>{
     if(p.trim()===""||p==='-') return p; return p.charAt(0).toUpperCase()+p.slice(1);
   }).join("");
 
-  window.addEventListener("DOMContentLoaded", ()=> {
-    try { init(); hideErr(); } 
-    catch(e){ console.error(e); showErr(e?.message||String(e)); }
-  });
+  window.addEventListener("DOMContentLoaded", ()=>{ try{init();hideErr();}catch(e){console.error(e);showErr(e.message);} });
 
   function init(){
-    // ===== Catálogo robusto =====
     const C = window.CATALOG || {};
     const ROLES = Array.isArray(C.roles) && C.roles.length ? C.roles :
       ["Victima","Imputado","Denunciante","Testigo","PP"];
 
-    // ===== Autosave =====
     const state = loadState();
-    function loadState(){
-      try{ return Object.assign({personas:[]}, JSON.parse(localStorage.getItem("hr_simple")||"{}")); }
-      catch{ return {personas:[]}; }
-    }
+    function loadState(){ try{ return Object.assign({personas:[]}, JSON.parse(localStorage.getItem("hr_simple")||"{}")); } catch{ return {personas:[]}; } }
     function save(){ localStorage.setItem("hr_simple", JSON.stringify(state)); }
 
-    // ===== Bind básicos (si falta un id, se ignora sin romper) =====
     ["fecha","pu","comisaria","caratula","titulo","subtitulo","estado","ufi","juzgado","preventor","barrio","cuerpo","secuestroTexto"].forEach(id=>{
       const n=$("#"+id); if(!n) return;
-      n.value = state[id] ?? "";
-      n.oninput = ()=>{ state[id]=n.value; save(); };
+      n.value = state[id] ?? ""; n.oninput = ()=>{ state[id]=n.value; save(); };
     });
 
-    // ===== Roles =====
-    const rolesSel = $("#roles");
-    if(rolesSel){
-      rolesSel.innerHTML = "";
-      ROLES.forEach(r=>{ const o=el("option"); o.textContent=r; rolesSel.appendChild(o); });
-    }
+    const rolesSel=$("#roles");
+    if(rolesSel){ rolesSel.innerHTML=""; ROLES.forEach(r=>{ const o=el("option"); o.textContent=r; rolesSel.appendChild(o); }); }
 
-    // ===== Personas =====
-    if($("#agregarPersona")) $("#agregarPersona").onclick = ()=>{ 
-      state.personas.push({rol: rolesSel ? (rolesSel.value||ROLES[0]) : ROLES[0]}); 
-      save(); renderPersonas(); 
-    };
+    if($("#agregarPersona")) $("#agregarPersona").onclick = ()=>{ state.personas.push({rol:rolesSel?rolesSel.value:ROLES[0]}); save(); renderPersonas(); };
     renderPersonas();
 
     function renderPersonas(){
-      const wrap=$("#personas"); if(!wrap) return;
-      wrap.innerHTML="";
-      const byRole = {};
-      state.personas.forEach(p=>{ const k=(p.rol||"").toLowerCase(); (byRole[k]=byRole[k]||[]).push(p); });
+      const wrap=$("#personas"); if(!wrap) return; wrap.innerHTML="";
+      const byRole={}; state.personas.forEach(p=>{ const k=(p.rol||"").toLowerCase(); (byRole[k]=byRole[k]||[]).push(p); });
       state.personas.forEach((p,idx)=>{
         const roleIdx = (byRole[(p.rol||"").toLowerCase()]||[]).indexOf(p);
-        const item = el("div","item");
-        item.innerHTML = `
+        const item=el("div","item");
+        item.innerHTML=`
           <div class="line">
             <select data-k="rol">${ROLES.map(r=>`<option ${p.rol===r?'selected':''}>${r}</option>`).join("")}</select>
             <input data-k="nombre" placeholder="Nombre" value="${p.nombre||''}"/>
@@ -66,163 +46,118 @@
             <input data-k="domicilio" placeholder="Domicilio" value="${p.domicilio||''}"/>
             <input data-k="ciudad" placeholder="Ciudad" value="${p.ciudad||''}"/>
           </div>
-          <div class="small">Usar en texto: #${(p.rol||'').toLowerCase()}:${roleIdx} (se capitaliza Nombre/Apellido/Domicilio/Ciudad)</div>
-          <div class="row" style="justify-content:flex-end;margin-top:6px">
-            <button class="btn outline" data-del>Eliminar</button>
-          </div>`;
+          <div class="small">Usar en texto: #${(p.rol||'').toLowerCase()}:${roleIdx}</div>
+          <div class="row" style="justify-content:flex-end"><button class="btn outline" data-del>Eliminar</button></div>`;
         item.querySelectorAll("input,select").forEach(inp=>{
-          inp.oninput = (e)=>{ p[e.target.getAttribute("data-k")] = e.target.value; save(); };
+          inp.oninput=(e)=>{ p[e.target.getAttribute("data-k")]=e.target.value; save(); };
         });
-        item.querySelector("[data-del]").onclick = ()=>{ state.personas.splice(idx,1); save(); renderPersonas(); };
+        item.querySelector("[data-del]").onclick=()=>{ state.personas.splice(idx,1); save(); renderPersonas(); };
         wrap.appendChild(item);
       });
     }
 
-    // ===== Generación (placeholders + secuestro libre) =====
     function personaHTML(role, idx){
-      const arr = state.personas.filter(p=>(p.rol||"").toLowerCase()===role);
-      const p = arr[idx]; if(!p) return null;
-      const base = `${TitleCase(p.nombre||"")} ${TitleCase(p.apellido||"")}${p.edad?` (${p.edad})`:""}${p.domicilio?` – ${TitleCase(p.domicilio)}`:""}${p.ciudad?`, ${TitleCase(p.ciudad)}`:""}`;
+      const arr=state.personas.filter(p=>(p.rol||"").toLowerCase()===role);
+      const p=arr[idx]; if(!p) return null;
+      const base=`${TitleCase(p.nombre||"")} ${TitleCase(p.apellido||"")}${p.edad?` (${p.edad})`:""}${p.domicilio?` – ${TitleCase(p.domicilio)}`:""}${p.ciudad?`, ${TitleCase(p.ciudad)}`:""}`;
       return `<strong>${base.trim()}</strong>`;
     }
-    const formatSecuestroHtml = (txt)=> (txt||"").trim() ? `<em><u>${(txt||"").trim()}</u></em>` : "";
+    const formatSecuestroHtml=(txt)=> (txt||"").trim()? `<em><u>${(txt||"").trim()}</u></em>`:"";
 
     function replacePlaceholders(text){
-      const warn = $("#placeholdersWarn");
-      const missing = new Set();
-      const rolesLower = ROLES.map(r=>r.toLowerCase());
-
+      const rolesLower=ROLES.map(r=>r.toLowerCase());
       rolesLower.forEach(role=>{
-        text = text.replace(new RegExp(`#${role}:(\\d+)`,"gi"), (m,idx)=>{
-          const html = personaHTML(role, parseInt(idx,10));
-          if(!html){ missing.add(m); return m; }
-          return html;
+        text=text.replace(new RegExp(`#${role}:(\\d+)`,"gi"),(m,idx)=>{
+          const html=personaHTML(role,parseInt(idx,10)); return html||m;
         });
       });
-
-      const secHtml = formatSecuestroHtml(($("#secuestroTexto")?.value)||"");
-      if(text.includes("#secuestro")){
-        text = text.replace(/#secuestro/gi, secHtml);
-      } else if (secHtml){
-        text = text + (text.endsWith("\n")?"":"\n") + secHtml;
-      }
-
-      if(warn){
-        if(missing.size){ $("#warnList").textContent = Array.from(missing).join(", "); warn.hidden=false; }
-        else warn.hidden=true;
-      }
+      const secHtml=formatSecuestroHtml(($("#secuestroTexto")?.value)||"");
+      if(text.includes("#secuestro")) text=text.replace(/#secuestro/gi, secHtml);
       return text;
     }
 
-    const htmlToWA = (html)=> html
-      .replace(/<strong>(.*?)<\/strong>/g, (m,p1)=>`*${p1}*`)
-      .replace(/<em>(.*?)<\/em>/g, (m,p1)=>`_${p1}_`)
-      .replace(/<u>(.*?)<\/u>/g,   (m,p1)=>`_${p1}_`)
-      .replace(/<[^>]+>/g,"");
-
-    function generar(){
-      const titulo = ($("#titulo")?.value||"").trim();
-      const subtitulo = ($("#subtitulo")?.value||"").trim();
-      const estado = ($("#estado")?.value||"no");
-      const cuerpo = replacePlaceholders(($("#cuerpo")?.value||"").trim());
-      const barrio = ($("#barrio")?.value||"").trim();
-
-      const subtBadge = `<span class="badge ${estado==='si'?'blue':'red'}"><strong>${subtitulo}</strong></span>`;
-      const encabezado = `<strong>${titulo}</strong> ${subtBadge}`;
-      const loc = barrio ? `\nUbicación: ${TitleCase(barrio)}` : "";
-
-      if($("#preview")) $("#preview").innerHTML = encabezado + "\n\n" + cuerpo + loc;
-
-      const waShort = `*${titulo}*\n*${subtitulo}*`;
-      const waLong  = waShort + "\n\n" + htmlToWA(cuerpo) + (loc? "\n\n"+loc : "");
-      if($("#previewWaShort")) $("#previewWaShort").textContent = waShort;
-      if($("#previewWaLong"))  $("#previewWaLong").textContent  = waLong;
-
-      return {titulo, subtitulo, estado, cuerpoHtml: cuerpo, waShort, waLong};
+    function htmlToWA(html){
+      let s=html||"";
+      s=s.replace(/<em><u>(.*?)<\/u><\/em>/gis,'_$1_');
+      s=s.replace(/<u><em>(.*?)<\/em><\/u>/gis,'_$1_');
+      s=s.replace(/<strong>(.*?)<\/strong>/gis,'*$1*');
+      s=s.replace(/<em>(.*?)<\/em>/gis,'_$1_');
+      s=s.replace(/<u>(.*?)<\/u>/gis,'$1');
+      s=s.replace(/<[^>]+>/g,'');
+      s=s.replace(/\r/g,'');
+      s=s.replace(/\n{3,}/g,'\n\n');
+      s=s.replace(/([^\n])\n([^\n])/g,'$1 $2');
+      return s.trim();
     }
 
-    if($("#generar")) $("#generar").onclick = generar;
-    document.addEventListener("keydown",(e)=>{ if(e.ctrlKey && e.key==="Enter"){ e.preventDefault(); generar(); } });
+    function generar(){
+      const fechaFull=($("#fecha")?.value||"").trim();
+      const fechaSolo=fechaFull.split("–")[0].trim()||fechaFull;
+      const pu=($("#pu")?.value||"").trim();
+      const comisaria=($("#comisaria")?.value||"").trim();
+      const caratula=($("#caratula")?.value||"").trim();
+      const subtitulo=($("#subtitulo")?.value||"").trim();
+      const estado=($("#estado")?.value||"no");
+      const cuerpoHtml=replacePlaceholders(($("#cuerpo")?.value||"").trim());
 
-    if($("#copiarWACorto")) $("#copiarWACorto").onclick = ()=>{ const d=generar(); navigator.clipboard.writeText(d.waShort).then(()=>alert("Copiado (corta)")); };
-    if($("#copiarWALargo")) $("#copiarWALargo").onclick = ()=>{ const d=generar(); navigator.clipboard.writeText(d.waLong).then(()=>alert("Copiado (larga)")); };
+      const linea1HTML=`<strong>${[fechaSolo,pu,comisaria.toUpperCase(),caratula.toUpperCase()].filter(Boolean).join(" – ")}</strong>`;
+      const colorClase=(estado==='si')?'blue':'red';
+      const linea2HTML=`<span class="badge ${colorClase}"><strong>${subtitulo}</strong></span>`;
+      if($("#preview")) $("#preview").innerHTML=`${linea1HTML}\n${linea2HTML}\n\n${cuerpoHtml}`;
 
-    // ===== DOCX (v8.x) =====
-    if($("#descargarWord")) $("#descargarWord").onclick = async ()=>{
+      const headerWA1=`*${[fechaSolo,pu,comisaria,caratula].filter(Boolean).join(" – ")}*`;
+      const headerWA2=`*${subtitulo}*`;
+      const cuerpoWA=htmlToWA(cuerpoHtml);
+
+      const waShort=`${headerWA1}\n${headerWA2}`;
+      const waLong =`${waShort}\n\n${cuerpoWA}`;
+      if($("#previewWaShort")) $("#previewWaShort").textContent=waShort;
+      if($("#previewWaLong"))  $("#previewWaLong").textContent=waLong;
+
+      return {waShort,waLong,cuerpoHtml,subtitulo,estado,pu};
+    }
+
+    if($("#generar")) $("#generar").onclick=generar;
+    if($("#copiarWACorto")) $("#copiarWACorto").onclick=()=>{ const d=generar(); navigator.clipboard.writeText(d.waShort).then(()=>alert("Copiado (corta)")); };
+    if($("#copiarWALargo")) $("#copiarWALargo").onclick=()=>{ const d=generar(); navigator.clipboard.writeText(d.waLong).then(()=>alert("Copiado (larga)")); };
+
+    if($("#descargarWord")) $("#descargarWord").onclick=async()=>{
       try{
-        const d = generar();
-        const docx = window.docx;
-        if(!docx || !docx.Document) throw new Error("Librería docx no cargada");
-
-        function htmlFragToDocx(html){
-          const parts = html.split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
-          let b=false,i=false,u=false; const runs=[];
+        const d=generar(); const docx=window.docx; if(!docx||!docx.Document) throw new Error("docx no cargada");
+        const JUST=docx.AlignmentType.JUSTIFIED;
+        const toRuns=(html)=>{ const parts=(html||"").split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
+          let B=false,I=false,U=false; const runs=[];
           for(const part of parts){
-            if(part==="<strong>"){b=true;continue;}
-            if(part==="</strong>"){b=false;continue;}
-            if(part==="<em>"){i=true;continue;}
-            if(part==="</em>"){i=false;continue;}
-            if(part==="<u>"){u=true;continue;}
-            if(part==="</u>"){u=false;continue;}
-            if(part){ runs.push(new docx.TextRun({text:part, bold:b, italics:i, underline: u?{}:undefined})); }
+            if(part==="<strong>"){B=true;continue;}
+            if(part==="</strong>"){B=false;continue;}
+            if(part==="<em>"){I=true;continue;}
+            if(part==="</em>"){I=false;continue;}
+            if(part==="<u>"){U=true;continue;}
+            if(part==="</u>"){U=false;continue;}
+            if(part) runs.push(new docx.TextRun({text:part,bold:B,italics:I,underline:U?{}:undefined}));
           }
-          return new docx.Paragraph({children:runs, alignment: docx.AlignmentType.JUSTIFIED, spacing:{after:200}});
-        }
-
-        const fecha = $("#fecha")?.value||"";
-        const pu = $("#pu")?.value||"";
-        const comisaria = $("#comisaria")?.value||"";
-        const caratula = $("#caratula")?.value||"";
-        const ufi = $("#ufi")?.value||"";
-        const juz = $("#juzgado")?.value||"";
-        const prev = $("#preventor")?.value||"";
-        const barrio = $("#barrio")?.value||"";
-
-        const bodyParas = (d.cuerpoHtml||"").split(/\n\n+/).map(p=>htmlFragToDocx(p));
-        const meta = [
-          new docx.Paragraph({text:`Fecha/Hora: ${fecha}`, style:"Meta"}),
-          new docx.Paragraph({text:`PU/IPP: ${pu}`, style:"Meta"}),
-          new docx.Paragraph({text:`Dependencia: ${comisaria}`, style:"Meta"}),
-          new docx.Paragraph({text:`Carátula: ${caratula}`, style:"Meta"}),
-          ...(ufi?[new docx.Paragraph({text:`UFI/Intervención: ${ufi}`, style:"Meta"})]:[]),
-          ...(juz?[new docx.Paragraph({text:`Juzgado: ${juz}`, style:"Meta"})]:[]),
-          ...(prev?[new docx.Paragraph({text:`Preventor/Móvil: ${prev}`, style:"Meta"})]:[]),
-          ...(barrio?[new docx.Paragraph({text:`Ubicación: ${TitleCase(barrio)}`, style:"Meta"})]:[]),
-          new docx.Paragraph({text:""})
-        ];
-
-        const doc = new docx.Document({
-          styles:{ paragraphStyles:[
-            {id:"H",name:"Heading",basedOn:"Normal",run:{bold:true,size:28},paragraph:{spacing:{after:200}}},
-            {id:"S",name:"Sub",basedOn:"Normal",run:{bold:true,size:24,color: d.estado==='si'?'2e86ff':'ff4d4d'},paragraph:{spacing:{after:200}}},
-            {id:"Meta",name:"Meta",basedOn:"Normal",run:{italic:true,color:"6b7cff"}}
-          ]},
-          sections: [{
-            children: [
-              new docx.Paragraph({text:d.titulo, style:"H"}),
-              new docx.Paragraph({text:d.subtitulo, style:"S"}),
-              ...meta,
-              ...bodyParas
-            ]
-          }]
-        });
-
-        const blob = await docx.Packer.toBlob(doc);
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `Hecho_Relevante_${(pu||'sinPU').replace(/\s+/g,'_')}.docx`;
-        a.click();
-      }catch(e){ console.error(e); showErr(e.message||e); }
+          return runs; };
+        const bodyParas=(d.cuerpoHtml||"").split(/\n\n+/).map(p=>new docx.Paragraph({children:toRuns(p),alignment:JUST,spacing:{after:200}}));
+        const linea1=[($("#fecha")?.value||"").split("–")[0].trim(), d.pu||"", ($("#comisaria")?.value||"").toUpperCase(), ($("#caratula")?.value||"").toUpperCase()].filter(Boolean).join(" – ");
+        const colorSub=(d.estado==="si")?"2e86ff":"ff4d4d";
+        const doc=new docx.Document({sections:[{children:[
+          new docx.Paragraph({children:[new docx.TextRun({text:linea1,bold:true})]}),
+          new docx.Paragraph({children:[new docx.TextRun({text:d.subtitulo,bold:true,color:colorSub})]}),
+          new docx.Paragraph({text:""}),
+          ...bodyParas
+        ]}]});
+        const blob=await docx.Packer.toBlob(doc);
+        const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+        a.download=`Hecho_Relevante_${(d.pu||'sinPU').replace(/\s+/g,'_')}.docx`; a.click();
+      }catch(e){console.error(e);showErr(e.message||e);}
     };
 
-    // ===== Semilla opcional (borrar si querés vacío) =====
     if(!state.personas.length){
-      state.personas.push({rol:ROLES[0], nombre:"edgardo marcelo", apellido:"lemos", edad:"62", domicilio:"agapantus 1237", ciudad:"mar del plata"});
-      state.cuerpo = state.cuerpo || "Fecha... entrevistan con #victima:0 ... sustrayendo #secuestro ...";
-      state.secuestroTexto = state.secuestroTexto || "Celular iPhone 13, $ 2.000.000 y U$D 20.000.";
-      ["cuerpo","secuestroTexto"].forEach(id=>{ if($("#"+id)) $("#"+id).value=state[id]; });
-      save();
-      renderPersonas();
+      state.personas.push({rol:ROLES[0],nombre:"edgardo marcelo",apellido:"lemos",edad:"62",domicilio:"agapantus 1237",ciudad:"mar del plata"});
+      state.cuerpo="Fecha... entrevistan con #victima:0 ... sustrayendo #secuestro ...";
+      state.secuestroTexto="Celular iPhone 13, $ 2.000.000 y U$D 20.000."; save(); renderPersonas();
+      if($("#cuerpo")) $("#cuerpo").value=state.cuerpo;
+      if($("#secuestroTexto")) $("#secuestroTexto").value=state.secuestroTexto;
     }
   }
 })();
