@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Hechos Relevantes — PRO</title>
+  <title>Hechos Relevantes — Simple</title>
   <link rel="stylesheet" href="assets/styles.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,13 +14,8 @@
 <body>
   <header class="topbar">
     <div>
-      <h1>Hechos Relevantes — PRO</h1>
-      <div class="subtitle">Front-end puro • GitHub Pages • Autoguardado • DOCX • WhatsApp</div>
-    </div>
-    <div class="actions">
-      <button class="btn small outline" id="guardarSnap">Guardar versión</button>
-      <select id="snapshots" title="Versiones guardadas"></select>
-      <button class="btn small outline" id="restaurarSnap">Restaurar</button>
+      <h1>Hechos Relevantes</h1>
+      <div class="subtitle">WA + DOCX • Secuestros texto libre • Justificado</div>
     </div>
   </header>
 
@@ -28,13 +23,7 @@
     <div id="errorBox" class="warn" hidden></div>
 
     <section class="card">
-      <div class="flex-between">
-        <h2>1) Encabezado</h2>
-        <label class="toggle">
-          <input type="checkbox" id="confidencial"/>
-          <span>Modo confidencial</span>
-        </label>
-      </div>
+      <h2>1) Encabezado</h2>
       <div class="grid">
         <label>Fecha y hora <input id="fecha" placeholder="20-09-2025 – 17:15 hs"/></label>
         <label>PU / IPP / NUC <input id="pu" placeholder="PU 270840 • IPP 12345"/></label>
@@ -43,14 +32,7 @@
       </div>
       <div class="grid">
         <label>Título (negrita) <input id="titulo" placeholder="ROBO AGRAVADO..."/></label>
-        <label>Subtítulo
-          <div class="row">
-            <input id="subtitulo" class="grow" placeholder="Entradera"/>
-            <select id="subTpl">
-              <option value="">Plantillas Subtítulo…</option>
-            </select>
-          </div>
-        </label>
+        <label>Subtítulo <input id="subtitulo" placeholder="Entradera"/></label>
         <label>Estado
           <select id="estado">
             <option value="no">No esclarecido (Rojo)</option>
@@ -64,25 +46,20 @@
         <label>Preventor / Móvil <input id="preventor" placeholder="Of. … / Móvil …"/></label>
       </div>
       <div class="grid">
-        <label>Latitud <input id="lat" placeholder="-38.0"/></label>
-        <label>Longitud <input id="lng" placeholder="-57.5"/></label>
         <label>Barrio / Sector <input id="barrio" placeholder="La Aurelia, Constitución, etc."/></label>
       </div>
     </section>
 
     <section class="card">
-      <div class="flex-between">
-        <h2>2) Texto del hecho</h2>
-        <div class="row">
-          <select id="snippets"></select>
-          <button class="btn small outline" id="insertSnippet">Insertar</button>
-        </div>
-      </div>
+      <h2>2) Texto del hecho</h2>
       <p class="hint">
-        Placeholders: <code>#victima:0</code>, <code>#imputado:0</code>, <code>#denunciante:0</code>, <code>#testigo:0</code>, <code>#pp:0</code>.
-        Ítems: <code>#secuestro:0</code>, <code>#sustraccion:todos</code>, <code>#recupero:0</code>.
+        Placeholders de personas: <code>#victima:0</code>, <code>#imputado:0</code>, <code>#denunciante:0</code>, <code>#testigo:0</code>. <br/>
+        Secuestros: escribí abajo y poné <code>#secuestro</code> donde quieras insertarlo (si no, se agrega al final).
       </p>
-      <textarea id="cuerpo" rows="10" placeholder="Redactá y usá #placeholders en el texto…"></textarea>
+      <textarea id="cuerpo" rows="10" placeholder="Redactá el hecho y usá #victima:0 y #secuestro..."></textarea>
+      <label style="margin-top:8px">Secuestros (texto libre, se insertan en cursiva + subrayado)
+        <textarea id="secuestroTexto" rows="4" placeholder="Ej.: Celular iPhone 13, $ 2.000.000 y U$D 20.000."></textarea>
+      </label>
       <div id="placeholdersWarn" class="warn" hidden>Hay placeholders sin datos: <span id="warnList"></span></div>
     </section>
 
@@ -92,34 +69,13 @@
         <div class="row">
           <select id="roles"></select>
           <button class="btn small" id="agregarPersona">+ Agregar</button>
-          <button class="btn small outline" id="abrirDlgPersona">Formulario</button>
         </div>
       </div>
       <div id="personas"></div>
     </section>
 
     <section class="card">
-      <div class="flex-between">
-        <h2>4) Objetos (Secuestro / Sustracción / Recupero)</h2>
-        <div class="row">
-          <button class="btn small" id="agregarSecuestro">+ Agregar</button>
-          <button class="btn small outline" id="abrirDlgObjeto">Formulario</button>
-        </div>
-      </div>
-      <div id="secuestros"></div>
-      <div class="totales">
-        <div>Total ARS: <strong id="totARS">$0</strong></div>
-        <div>Total USD: <strong id="totUSD">USD 0</strong></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>5) Checklist de cierre</h2>
-      <div id="checklist" class="checks"></div>
-    </section>
-
-    <section class="card">
-      <h2>6) Salidas</h2>
+      <h2>4) Salidas</h2>
       <div class="btns">
         <button class="btn" id="generar">Generar</button>
         <button class="btn outline" id="copiarWACorto">Copiar WA — Corta</button>
@@ -134,71 +90,7 @@
     </section>
   </main>
 
-  <footer class="foot">Atajos: Ctrl+Enter = Generar • Ctrl+S = Guardar versión • Ctrl+Shift+C = Copiar WA Corta</footer>
-
-  <!-- Dialog: Persona -->
-  <dialog id="dlgPersona" class="dlg">
-    <form method="dialog" class="dlg-card">
-      <h3>Nuevo involucrado</h3>
-      <div class="grid">
-        <label>Rol
-          <select id="fRol"></select>
-        </label>
-        <label>Nombre <input id="fNom" /></label>
-        <label>Apellido <input id="fApe" /></label>
-        <label>Edad <input id="fEdad" /></label>
-        <label>Nacionalidad <input id="fNac" /></label>
-        <label>Fallecido
-          <select id="fFal">
-            <option value="no">No</option><option value="si">Sí</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid">
-        <label>Domicilio <input id="fDom" /></label>
-        <label>Ciudad <input id="fCiu" /></label>
-        <label>DNI (opc.) <input id="fDni" /></label>
-      </div>
-      <div class="row end">
-        <button class="btn outline" value="close">Cancelar</button>
-        <button class="btn" id="fAddPersona" value="default">Agregar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- Dialog: Objeto -->
-  <dialog id="dlgObjeto" class="dlg">
-    <form method="dialog" class="dlg-card">
-      <h3>Nuevo objeto</h3>
-      <div class="grid">
-        <label>Tipo
-          <select id="oTipo">
-            <option value="sustraccion">Sustracción</option>
-            <option value="secuestro">Secuestro</option>
-            <option value="recupero">Recupero</option>
-          </select>
-        </label>
-        <label>Detalle/Descripción <input id="oDet" /></label>
-        <label>Marca/Modelo <input id="oMarca" /></label>
-        <label>Serie/IMEI/Patente <input id="oSerie" /></label>
-        <label>Cantidad <input id="oCant" value="1"/></label>
-        <label>Moneda
-          <select id="oMon">
-            <option value="">Sin valor</option>
-            <option value="ARS">ARS</option>
-            <option value="USD">USD</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid">
-        <label>Valor unitario <input id="oVal" placeholder="ej: 2000000"/></label>
-      </div>
-      <div class="row end">
-        <button class="btn outline" value="close">Cancelar</button>
-        <button class="btn" id="fAddObjeto" value="default">Agregar</button>
-      </div>
-    </form>
-  </dialog>
+  <footer class="foot">Ctrl+Enter = Generar</footer>
 </body>
 </html>
 
