@@ -4,7 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hechos Relevantes</title>
-  <link rel="stylesheet" href="assets/styles.css?v=1"/>
+  <link rel="stylesheet" href="assets/styles.css?v=2"/>
+  <link rel="stylesheet" href="assets/tabs.css?v=2"/>
 </head>
 <body>
   <header class="hero">
@@ -31,7 +32,9 @@
         </div>
       </div>
 
-      <div class="small" style="margin-top:6px">Seleccioná 1 (radio) para cargar/actualizar o varios (checkbox) para exportar.</div>
+      <div class="small" style="margin-top:6px">
+        Seleccioná 1 (radio) para cargar/actualizar o varios (checkbox) para exportar.
+      </div>
       <div id="casesList" class="preview" style="max-height:220px;overflow:auto">Sin hechos guardados.</div>
 
       <div class="row" style="margin-top:10px">
@@ -41,125 +44,134 @@
       </div>
     </section>
 
-    <!-- Datos generales -->
+    <!-- TABS -->
     <section class="card">
-      <h2>1) Datos generales</h2>
-      <div class="grid">
-        <label>Fecha – Hora <input id="g_fecha" placeholder="20-09-2025 – 17:15 hs"></label>
-        <label>PU / IPP / NUC <input id="g_pu" placeholder="PU 270840 – IPP 12345"></label>
-        <label>Dependencia <input id="g_dep" placeholder="Sub. Cría. Camet. Mar del Plata"></label>
-        <label>Carátula <input id="g_car" placeholder="Robo agravado en poblado en banda y por el uso de arma de fuego"></label>
-      </div>
-      <div class="grid">
-        <label>Subtítulo <input id="g_sub" placeholder="Entradera"></label>
-        <label>Estado
-          <select id="g_ok">
-            <option value="no">No esclarecido (Rojo)</option>
-            <option value="si">Esclarecido (Azul)</option>
-          </select>
-        </label>
-      </div>
-      <div class="title-preview">
-        <div id="tituloCompuesto" class="titleline">—</div>
-        <div id="subCompuesto" class="subtitleline">—</div>
-      </div>
-    </section>
+      <h2>1) Carga de datos</h2>
 
-    <!-- Civiles -->
-    <section class="card">
-      <h2>2) Civiles</h2>
-      <div class="grid">
-        <label>Nombre <input id="c_nombre"></label>
-        <label>Apellido <input id="c_apellido"></label>
-        <label>Edad <input id="c_edad"></label>
-        <label>Género
-          <select id="c_genero">
-            <option value="">—</option><option>M</option><option>F</option><option>Otro</option>
-          </select>
-        </label>
-        <label>DNI <input id="c_dni"></label>
-        <label>País de origen <input id="c_pais"></label>
-        <label>Localidad domicilio <input id="c_loc"></label>
-        <label>Calle domicilio <input id="c_calle"></label>
-        <label>Vínculo
-          <select id="c_vinculo">
-            <option>Victima</option><option>Imputado</option><option>Denunciante</option>
-            <option>Testigo</option><option>PP</option><option>Aprehendido</option>
-            <option>Detenido</option><option>Menor</option><option>NN</option>
-            <option>Damnificado institucional</option>
-          </select>
-        </label>
-        <label>¿Óbito?
-          <select id="c_obito"><option value="false">No</option><option value="true">Sí</option></select>
-        </label>
-      </div>
-      <div class="row">
-        <button class="btn" id="addCivil">Agregar involucrado</button>
-      </div>
-      <div id="civilesList" class="table"></div>
-    </section>
+      <div class="tabs" data-tabs>
+        <div class="tabs-nav">
+          <button class="tab is-active" data-tab="t-generales">Datos generales</button>
+          <button class="tab" data-tab="t-civiles">Civiles</button>
+          <button class="tab" data-tab="t-fuerzas">Personal Fuerzas</button>
+          <button class="tab" data-tab="t-objetos">Objetos</button>
+        </div>
 
-    <!-- Personal de Fuerzas -->
-    <section class="card">
-      <h2>3) Personal de Fuerzas</h2>
-      <div class="grid">
-        <label>Nombre <input id="f_nombre"></label>
-        <label>Apellido <input id="f_apellido"></label>
-        <label>Edad <input id="f_edad"></label>
-        <label>Fuerza <input id="f_fuerza" placeholder="Policía / Prefectura / etc."></label>
-        <label>Legajo <input id="f_legajo"></label>
-        <label>Jerarquía <input id="f_jerarquia"></label>
-        <label>Destino <input id="f_destino"></label>
-        <label>Localidad domicilio <input id="f_loc"></label>
-        <label>Calle domicilio <input id="f_calle"></label>
-        <label>Vínculo
-          <select id="f_vinculo">
-            <option>Imputado</option><option>Testigo</option><option>Denunciante</option><option>Victima</option><option>PP</option>
-          </select>
-        </label>
-        <label>¿Óbito?
-          <select id="f_obito"><option value="false">No</option><option value="true">Sí</option></select>
-        </label>
-      </div>
-      <div class="row">
-        <button class="btn" id="addFuerza">Agregar personal</button>
-      </div>
-      <div id="fuerzasList" class="table"></div>
-    </section>
+        <!-- Generales -->
+        <div class="tab-panel is-active" id="t-generales">
+          <div class="grid">
+            <label>Fecha – Hora <input id="g_fecha" placeholder="20-09-2025 – 17:15 hs"></label>
+            <label>PU / IPP / NUC <input id="g_pu" placeholder="PU 270840 – IPP 12345"></label>
+            <label>Dependencia <input id="g_dep" placeholder="Sub. Cría. Camet. Mar del Plata"></label>
+            <label>Carátula <input id="g_car" placeholder="Robo agravado en poblado en banda y por el uso de arma de fuego"></label>
+          </div>
+          <div class="grid">
+            <label>Subtítulo <input id="g_sub" placeholder="Entradera"></label>
+            <label>Estado
+              <select id="g_ok">
+                <option value="no">No esclarecido (Rojo)</option>
+                <option value="si">Esclarecido (Azul)</option>
+              </select>
+            </label>
+          </div>
+          <div class="title-preview">
+            <div id="tituloCompuesto" class="titleline">—</div>
+            <div id="subCompuesto" class="subtitleline">—</div>
+          </div>
+        </div>
 
-    <!-- Objetos -->
-    <section class="card">
-      <h2>4) Objetos</h2>
-      <div class="grid">
-        <label>Descripción <input id="o_desc" placeholder="Celular iPhone 13, $ 2.000.000 y USD 20.000."></label>
-        <label>Vínculo
-          <select id="o_vinc">
-            <option>Secuestro</option>
-            <option>Sustraccion</option>
-            <option>Hallazgo</option>
-            <option>Otro</option>
-          </select>
-        </label>
+        <!-- Civiles -->
+        <div class="tab-panel" id="t-civiles">
+          <div class="grid">
+            <label>Nombre <input id="c_nombre"></label>
+            <label>Apellido <input id="c_apellido"></label>
+            <label>Edad <input id="c_edad"></label>
+            <label>Género
+              <select id="c_genero">
+                <option value="">—</option><option>M</option><option>F</option><option>Otro</option>
+              </select>
+            </label>
+            <label>DNI <input id="c_dni"></label>
+            <label>País de origen <input id="c_pais"></label>
+            <label>Localidad domicilio <input id="c_loc"></label>
+            <label>Calle domicilio <input id="c_calle"></label>
+            <label>Vínculo
+              <select id="c_vinculo">
+                <option>Victima</option><option>Imputado</option><option>Denunciante</option>
+                <option>Testigo</option><option>PP</option><option>Aprehendido</option>
+                <option>Detenido</option><option>Menor</option><option>NN</option>
+                <option>Damnificado institucional</option>
+              </select>
+            </label>
+            <label>¿Óbito?
+              <select id="c_obito"><option value="false">No</option><option value="true">Sí</option></select>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn" id="addCivil">Agregar involucrado</button>
+          </div>
+          <div id="civilesList" class="table"></div>
+        </div>
+
+        <!-- Fuerzas -->
+        <div class="tab-panel" id="t-fuerzas">
+          <div class="grid">
+            <label>Nombre <input id="f_nombre"></label>
+            <label>Apellido <input id="f_apellido"></label>
+            <label>Edad <input id="f_edad"></label>
+            <label>Fuerza <input id="f_fuerza" placeholder="Policía / Prefectura / etc."></label>
+            <label>Legajo <input id="f_legajo"></label>
+            <label>Jerarquía <input id="f_jerarquia"></label>
+            <label>Destino <input id="f_destino"></label>
+            <label>Localidad domicilio <input id="f_loc"></label>
+            <label>Calle domicilio <input id="f_calle"></label>
+            <label>Vínculo
+              <select id="f_vinculo">
+                <option>Imputado</option><option>Testigo</option><option>Denunciante</option><option>Victima</option><option>PP</option>
+              </select>
+            </label>
+            <label>¿Óbito?
+              <select id="f_obito"><option value="false">No</option><option value="true">Sí</option></select>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn" id="addFuerza">Agregar personal</button>
+          </div>
+          <div id="fuerzasList" class="table"></div>
+        </div>
+
+        <!-- Objetos -->
+        <div class="tab-panel" id="t-objetos">
+          <div class="grid">
+            <label>Descripción <input id="o_desc" placeholder="Celular iPhone 13, $ 2.000.000 y USD 20.000."></label>
+            <label>Vínculo
+              <select id="o_vinc">
+                <option>Secuestro</option>
+                <option>Sustraccion</option>
+                <option>Hallazgo</option>
+                <option>Otro</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn danger" id="addObjeto">Agregar objeto</button>
+          </div>
+          <div id="objetosList" class="table"></div>
+        </div>
       </div>
-      <div class="row">
-        <button class="btn danger" id="addObjeto">Agregar objeto</button>
-      </div>
-      <div id="objetosList" class="table"></div>
     </section>
 
     <!-- Cuerpo -->
     <section class="card">
-      <h2>5) Resumen / Cuerpo</h2>
+      <h2>2) Resumen / Cuerpo</h2>
       <textarea id="cuerpo" rows="10" placeholder="Redactá el cuerpo. Ej.: &#10;Fecha... entrevistan con #victima:0 ... sustrayendo #secuestro ..."></textarea>
       <p class="hint">
-        Estilos rápidos: <code>*negrita*</code>, <code>_itálica_</code> (se usa automáticamente para secuestro),
-        <code>!subrayado!</code> (opcional, si querés subrayar algo manual).
+        Estilos rápidos: <code>*negrita*</code>, <code>_itálica_</code> (se usa en secuestro), <code>!subrayado!</code>.
       </p>
     </section>
 
     <!-- Salidas -->
     <section class="card">
-      <h2>6) Salidas</h2>
+      <h2>3) Salidas</h2>
       <div class="row">
         <button class="btn" id="generar">Generar vista previa</button>
         <button class="btn ghost" id="copiarWA">Copiar WhatsApp</button>
@@ -174,7 +186,9 @@
   <footer class="foot"><span>Ctrl + Enter = Generar</span></footer>
 
   <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
-  <script defer src="assets/formatter.js?v=1"></script>
-  <script defer src="assets/app.js?v=1"></script>
+  <script defer src="assets/formatter.js?v=2"></script>
+  <script defer src="assets/tabs.js?v=2"></script>
+  <script defer src="assets/app.js?v=2"></script>
 </body>
 </html>
+
