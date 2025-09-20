@@ -1,7 +1,6 @@
-// Catálogos editables (podés sumar/editar nombres sin romper nada)
+// Catálogos editables
 window.CATALOG = {
   roles: ["Victima","Imputado","Denunciante","Testigo","PP","Aprehendido","Detenido","Menor","NN","Damnificado institucional"],
-  // Quitamos 'barrios' porque ahora es input libre.
   subtitulos: ["Entradera","Arrebato","Usurpación","Encubrimiento","Hallazgo","Daño","Amenazas"],
   snippets: [
     {name:"Arribo 911", text:"Fecha, siendo las HH:MM hs., personal a raíz de llamado al 911 acude al lugar."},
