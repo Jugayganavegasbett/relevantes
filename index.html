@@ -1,97 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Hechos Relevantes — Simple</title>
-  <link rel="stylesheet" href="assets/styles.css"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
-  <script defer src="assets/templates.js?v=6"></script>
-  <script defer src="assets/app.js?v=6"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hechos Relevantes</title>
+  <link rel="stylesheet" href="assets/styles.css?v=7"/>
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <h1>Hechos Relevantes</h1>
-      <div class="subtitle">WA + DOCX • Secuestros texto libre • Justificado</div>
-    </div>
-  </header>
+  <h1>Hechos Relevantes</h1>
+  <div id="errorBox" hidden style="color:red;font-weight:bold"></div>
 
-  <main class="container">
-    <div id="errorBox" class="warn" hidden></div>
+  <!-- Encabezado -->
+  <section>
+    <h2>1) Encabezado</h2>
+    <input id="fecha" placeholder="Fecha – Hora"/>
+    <input id="pu" placeholder="PU / IPP / NUC"/>
+    <input id="comisaria" placeholder="Dependencia"/>
+    <input id="caratula" placeholder="Carátula"/>
+    <input id="subtitulo" placeholder="Subtítulo"/>
+    <select id="estado">
+      <option value="no">No esclarecido</option>
+      <option value="si">Esclarecido</option>
+    </select>
+  </section>
 
-    <section class="card">
-      <h2>1) Encabezado</h2>
-      <div class="grid">
-        <label>Fecha y hora <input id="fecha" placeholder="20-09-2025 – 17:15 hs"/></label>
-        <label>PU / IPP / NUC <input id="pu" placeholder="PU 270840 • IPP 12345"/></label>
-        <label>Dependencia <input id="comisaria" placeholder="SUB. CRIA. CAMET. MAR DEL PLATA"/></label>
-        <label>Carátula <input id="caratula" placeholder="Robo agravado..."/></label>
-      </div>
-      <div class="grid">
-        <label>Título (negrita) <input id="titulo" placeholder="ROBO AGRAVADO..."/></label>
-        <label>Subtítulo <input id="subtitulo" placeholder="Entradera"/></label>
-        <label>Estado
-          <select id="estado">
-            <option value="no">No esclarecido (Rojo)</option>
-            <option value="si">Esclarecido (Azul)</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid">
-        <label>UFI / Intervención <input id="ufi" placeholder="UFI Nº …"/></label>
-        <label>Juzgado <input id="juzgado" placeholder="Juzgado de Garantías Nº …"/></label>
-        <label>Preventor / Móvil <input id="preventor" placeholder="Of. … / Móvil …"/></label>
-      </div>
-      <div class="grid">
-        <label>Barrio / Sector <input id="barrio" placeholder="La Aurelia, Constitución, etc."/></label>
-      </div>
-    </section>
+  <!-- Personas -->
+  <section>
+    <h2>2) Involucrados</h2>
+    <select id="roles"></select>
+    <button id="agregarPersona">Agregar persona</button>
+    <div id="personas"></div>
+  </section>
 
-    <section class="card">
-      <h2>2) Texto del hecho</h2>
-      <p class="hint">
-        Placeholders de personas: <code>#victima:0</code>, <code>#imputado:0</code>, <code>#denunciante:0</code>, <code>#testigo:0</code>. <br/>
-        Secuestros: escribí abajo y poné <code>#secuestro</code> donde quieras insertarlo (si no, se agrega al final).
-      </p>
-      <textarea id="cuerpo" rows="10" placeholder="Redactá el hecho y usá #victima:0 y #secuestro..."></textarea>
-      <label style="margin-top:8px">Secuestros (texto libre, se insertan en cursiva + subrayado)
-        <textarea id="secuestroTexto" rows="4" placeholder="Ej.: Celular iPhone 13, $ 2.000.000 y U$D 20.000."></textarea>
-      </label>
-      <div id="placeholdersWarn" class="warn" hidden>Hay placeholders sin datos: <span id="warnList"></span></div>
-    </section>
+  <!-- Secuestro -->
+  <section>
+    <h2>3) Secuestro</h2>
+    <textarea id="secuestroTexto" placeholder="Escriba aquí los elementos secuestrados..."></textarea>
+  </section>
 
-    <section class="card">
-      <div class="flex-between">
-        <h2>3) Involucrados</h2>
-        <div class="row">
-          <select id="roles"></select>
-          <button class="btn small" id="agregarPersona">+ Agregar</button>
-        </div>
-      </div>
-      <div id="personas"></div>
-    </section>
+  <!-- Cuerpo -->
+  <section>
+    <h2>4) Cuerpo</h2>
+    <textarea id="cuerpo" placeholder="Redacte el cuerpo usando #victima:0, #secuestro, etc."></textarea>
+  </section>
 
-    <section class="card">
-      <h2>4) Salidas</h2>
-      <div class="btns">
-        <button class="btn" id="generar">Generar</button>
-        <button class="btn outline" id="copiarWACorto">Copiar WA — Corta</button>
-        <button class="btn outline" id="copiarWALargo">Copiar WA — Larga</button>
-        <button class="btn success" id="descargarWord">Descargar .docx</button>
-      </div>
-      <div id="preview" class="preview"></div>
-      <h3>Vista WhatsApp (corta)</h3>
-      <pre id="previewWaShort" class="preview wa"></pre>
-      <h3>Vista WhatsApp (larga)</h3>
-      <pre id="previewWaLong" class="preview wa"></pre>
-    </section>
-  </main>
+  <!-- Botones -->
+  <div style="margin:20px 0">
+    <button id="generar">Generar vista previa</button>
+    <button id="copiarWACorto">Copiar WA Corta</button>
+    <button id="copiarWALargo">Copiar WA Larga</button>
+    <button id="descargarWord">Descargar Word</button>
+  </div>
 
-  <footer class="foot">Ctrl+Enter = Generar</footer>
+  <!-- Vista previa -->
+  <h3>Vista previa (HTML)</h3>
+  <div id="preview" style="white-space:pre-wrap"></div>
+
+  <h3>WhatsApp Corta</h3>
+  <pre id="previewWaShort"></pre>
+  <h3>WhatsApp Larga</h3>
+  <pre id="previewWaLong"></pre>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+  <script defer src="assets/templates.js?v=7"></script>
+  <script defer src="assets/app.js?v=7"></script>
 </body>
 </html>
-
-
