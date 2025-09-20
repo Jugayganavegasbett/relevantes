@@ -1,195 +1,271 @@
 (function(){
-  const $ = (q)=>document.querySelector(q);
-  const el = (t,c)=>{const n=document.createElement(t); if(c) n.className=c; return n;};
-  const showErr = (m)=>{const b=$("#errorBox"); if(b){b.textContent="Error: "+m; b.hidden=false;}};
-  const hideErr = ()=>{const b=$("#errorBox"); if(b) b.hidden=true;};
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const showErr = m => { const b=$("#errorBox"); if(b){ b.textContent="Error: "+m; b.hidden=false; } };
+
+  const CASEKEY="hr_cases_v1";
 
   const TitleCase = (s)=> (s||"").toLowerCase().split(/(\s|-)/).map(p=>{
     if(p.trim()===""||p==='-') return p; return p.charAt(0).toUpperCase()+p.slice(1);
   }).join("");
 
-  window.addEventListener("DOMContentLoaded", ()=>{ try{ init(); hideErr(); }catch(e){ console.error(e); showErr(e.message||e); } });
+  function getCases(){ try{ return JSON.parse(localStorage.getItem(CASEKEY)||"[]"); }catch{ return []; } }
+  function setCases(arr){ localStorage.setItem(CASEKEY, JSON.stringify(arr)); }
+  function freshId(){ return "c_"+Date.now()+"_"+Math.random().toString(36).slice(2,7); }
 
-  function init(){
-    // Roles
-    const ROLES = (window.CATALOG && Array.isArray(window.CATALOG.roles) && window.CATALOG.roles.length)
-      ? window.CATALOG.roles
-      : ["Victima","Imputado","Denunciante","Testigo","PP"];
+  function renderCases(){
+    const box=$("#casesList"); if(!box) return;
+    const cases = getCases();
+    if(!cases.length){ box.innerHTML="Sin hechos guardados."; return; }
+    box.innerHTML = `<table><thead><tr><th></th><th></th><th>Nombre</th><th>Fecha</th><th>PU</th></tr></thead><tbody>${
+      cases.map(c=>`<tr>
+        <td><input type="checkbox" class="caseCheck" data-id="${c.id}"></td>
+        <td><input type="radio" name="caseSel" data-id="${c.id}"></td>
+        <td>${c.name||''}</td><td>${c.generales?.fecha_hora||''}</td><td>${c.generales?.pu||''}</td>
+      </tr>`).join("")
+    }</tbody></table>`;
+  }
 
-    // Estado
-    const state = loadState(); function loadState(){ try{ return Object.assign({personas:[]}, JSON.parse(localStorage.getItem("hr_state")||"{}")); }catch{ return {personas:[]}; } }
-    function save(){ localStorage.setItem("hr_state", JSON.stringify(state)); }
+  function collectData(){
+    const generales = {
+      fecha_hora: $("#g_fecha").value.trim(),
+      pu: $("#g_pu").value.trim(),
+      dependencia: $("#g_dep").value.trim(),
+      caratula: $("#g_car").value.trim(),
+      subtitulo: $("#g_sub").value.trim(),
+      esclarecido: $("#g_ok").value==="si"
+    };
+    const civiles = CIV.store.slice();
+    const fuerzas = FZA.store.slice();
+    const objetos = OBJ.store.slice();
+    const cuerpo = $("#cuerpo").value;
+    return { generales, civiles, fuerzas, objetos, cuerpo };
+  }
 
-    // Bind
-    ["fecha","pu","comisaria","caratula","subtitulo","estado","cuerpo","secuestroTexto"].forEach(id=>{
-      const n=$("#"+id); if(!n) return; n.value = state[id] ?? ""; n.oninput=()=>{ state[id]=n.value; save(); renderTitlePreview(); };
-    });
-
-    // Personas
-    const rolesSel = $("#roles"); if(rolesSel){ ROLES.forEach(r=>{ const o=el("option"); o.textContent=r; rolesSel.appendChild(o); }); }
-    if($("#agregarPersona")) $("#agregarPersona").onclick=()=>{ state.personas.push({rol: rolesSel ? rolesSel.value : ROLES[0]}); save(); renderPersonas(); };
-    renderPersonas();
-    function renderPersonas(){
-      const wrap=$("#personas"); if(!wrap) return; wrap.innerHTML="";
-      const byRole={}; state.personas.forEach(p=>{ const k=(p.rol||"").toLowerCase(); (byRole[k]=byRole[k]||[]).push(p); });
-      state.personas.forEach((p,idx)=>{
-        const roleIdx=(byRole[(p.rol||"").toLowerCase()]||[]).indexOf(p);
-        const item=el("div","item");
-        item.innerHTML = `
-          <div class="line">
-            <select data-k="rol">${ROLES.map(r=>`<option ${p.rol===r?'selected':''}>${r}</option>`).join("")}</select>
-            <input data-k="nombre" placeholder="Nombre" value="${p.nombre||''}"/>
-            <input data-k="apellido" placeholder="Apellido" value="${p.apellido||''}"/>
-            <input data-k="edad" placeholder="Edad" value="${p.edad||''}"/>
-            <input data-k="domicilio" placeholder="Domicilio" value="${p.domicilio||''}"/>
-            <input data-k="ciudad" placeholder="Ciudad" value="${p.ciudad||''}"/>
-          </div>
-          <div class="small">Placeholder: #${(p.rol||'').toLowerCase()}:${roleIdx} (capitaliza nombre/apellido/domicilio/ciudad)</div>
-          <div class="row" style="justify-content:flex-end"><button class="btn ghost" data-del>Eliminar</button></div>`;
-        item.querySelectorAll("input,select").forEach(inp=>{
-          inp.oninput=(e)=>{ p[e.target.getAttribute("data-k")] = e.target.value; save(); };
-        });
-        item.querySelector("[data-del]").onclick=()=>{ state.personas.splice(idx,1); save(); renderPersonas(); };
-        wrap.appendChild(item);
-      });
+  // ===== CIVILES =====
+  const CIV = {
+    store: [],
+    add(){
+      const p = {
+        nombre: $("#c_nombre").value, apellido: $("#c_apellido").value, edad: $("#c_edad").value,
+        genero: $("#c_genero").value, dni: $("#c_dni").value, pais: $("#c_pais").value,
+        loc_domicilio: $("#c_loc").value, calle_domicilio: $("#c_calle").value,
+        vinculo: $("#c_vinculo").value, obito: $("#c_obito").value==="true"
+      };
+      this.store.push(p); this.render();
+    },
+    render(){
+      const box=$("#civilesList");
+      if(!this.store.length){ box.innerHTML=""; return; }
+      box.innerHTML = `<div class="table"><table><thead><tr>
+        <th>#</th><th>Vínculo</th><th>Nombre</th><th>Apellido</th><th>Edad</th><th>DNI</th><th>Domicilio</th><th>Acción</th>
+      </tr></thead><tbody>${
+        this.store.map((p,i)=>`<tr>
+          <td>${i}</td><td>${p.vinculo}</td>
+          <td>${TitleCase(p.nombre||"")}</td><td>${TitleCase(p.apellido||"")}</td>
+          <td>${p.edad||""}</td><td>${p.dni||""}</td>
+          <td>${[TitleCase(p.calle_domicilio||""), TitleCase(p.loc_domicilio||"")].filter(Boolean).join(", ")}</td>
+          <td><button class="btn ghost" data-delc="${i}">Quitar</button></td>
+        </tr>`).join("")
+      }</tbody></table></div>`;
+      $$("#civilesList [data-delc]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delc,10),1); this.render(); });
     }
+  };
 
-    // Título compuesto (para preview)
-    function tituloCompuesto(){
-      const fechaFull = ($("#fecha")?.value||"").trim();
-      const fechaSolo = fechaFull.split("–")[0].trim() || fechaFull;
-      const pu = ($("#pu")?.value||"").trim();
-      const comisaria = ($("#comisaria")?.value||"").trim();
-      const caratula = ($("#caratula")?.value||"").trim();
-      return [fechaSolo, pu, comisaria, caratula].filter(Boolean).join(" – ");
+  // ===== FUERZAS =====
+  const FZA = {
+    store: [],
+    add(){
+      const p = {
+        nombre: $("#f_nombre").value, apellido: $("#f_apellido").value, edad: $("#f_edad").value,
+        fuerza: $("#f_fuerza").value, jerarquia: $("#f_jerarquia").value, legajo: $("#f_legajo").value,
+        destino: $("#f_destino").value,
+        loc_domicilio: $("#f_loc").value, calle_domicilio: $("#f_calle").value,
+        vinculo: $("#f_vinculo").value, obito: $("#f_obito").value==="true"
+      };
+      this.store.push(p); this.render();
+    },
+    render(){
+      const box=$("#fuerzasList");
+      if(!this.store.length){ box.innerHTML=""; return; }
+      box.innerHTML = `<div class="table"><table><thead><tr>
+        <th>#</th><th>Vínculo</th><th>Nombre</th><th>Apellido</th><th>Edad</th><th>Fuerza</th><th>Jerarquía</th><th>Destino</th><th>Acción</th>
+      </tr></thead><tbody>${
+        this.store.map((p,i)=>`<tr>
+          <td>${i}</td><td>${p.vinculo}</td>
+          <td>${TitleCase(p.nombre||"")}</td><td>${TitleCase(p.apellido||"")}</td>
+          <td>${p.edad||""}</td><td>${p.fuerza||""}</td><td>${p.jerarquia||""}</td><td>${p.destino||""}</td>
+          <td><button class="btn ghost" data-delf="${i}">Quitar</button></td>
+        </tr>`).join("")
+      }</tbody></table></div>`;
+      $$("#fuerzasList [data-delf]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delf,10),1); this.render(); });
     }
-    function renderTitlePreview(){
-      const t = tituloCompuesto();
-      const sub = ($("#subtitulo")?.value||"").trim();
-      const estado = ($("#estado")?.value||"no");
-      $("#tituloCompuesto").innerHTML = `<strong>${t}</strong>`;
-      $("#subCompuesto").innerHTML = `<span class="badge ${estado==='si'?'blue':'red'}"><strong>${sub}</strong></span>`;
+  };
+
+  // ===== OBJETOS =====
+  const OBJ = {
+    store: [],
+    add(){
+      const o = { descripcion: $("#o_desc").value, vinculo: $("#o_vinc").value };
+      if(!o.descripcion.trim()) return;
+      this.store.push(o); this.render();
+    },
+    render(){
+      const box=$("#objetosList");
+      if(!this.store.length){ box.innerHTML=""; return; }
+      box.innerHTML = `<div class="table"><table><thead><tr>
+        <th>#</th><th>Descripción</th><th>Vínculo</th><th>Acción</th>
+      </tr></thead><tbody>${
+        this.store.map((o,i)=>`<tr>
+          <td>${i}</td><td>${o.descripcion}</td><td>${o.vinculo}</td>
+          <td><button class="btn ghost" data-delo="${i}">Quitar</button></td>
+        </tr>`).join("")
+      }</tbody></table></div>`;
+      $$("#objetosList [data-delo]").forEach(b=> b.onclick = ()=>{ this.store.splice(parseInt(b.dataset.delo,10),1); this.render(); });
     }
-    renderTitlePreview();
+  };
 
-    // Helpers de formato
-    function personaHTML(role, idx){
-      const arr = state.personas.filter(p=>(p.rol||"").toLowerCase()===role);
-      const p = arr[idx]; if(!p) return null;
-      const base = `${TitleCase(p.nombre||"")} ${TitleCase(p.apellido||"")}${p.edad?` (${p.edad})`:""}${p.domicilio?` – ${TitleCase(p.domicilio)}`:""}${p.ciudad?`, ${TitleCase(p.ciudad)}`:""}`;
-      return `<strong>${base.trim()}</strong>`;
-    }
-    const formatSecuestroHtml = (txt)=> (txt||"").trim()? `<em><u>${(txt||"").trim()}</u></em>`:"";
+  // ===== Preview / WA / DOCX / CSV =====
+  function buildDataFromForm(){ // crea objeto del motor
+    return {
+      generales: {
+        fecha_hora: $("#g_fecha").value.trim(),
+        pu: $("#g_pu").value.trim(),
+        dependencia: $("#g_dep").value.trim(),
+        caratula: $("#g_car").value.trim(),
+        subtitulo: $("#g_sub").value.trim(),
+        esclarecido: $("#g_ok").value==="si"
+      },
+      civiles: CIV.store.slice(),
+      fuerzas: FZA.store.slice(),
+      objetos: OBJ.store.slice(),
+      cuerpo: $("#cuerpo").value
+    };
+  }
 
-    function replacePlaceholders(text){
-      // personas
-      const rolesLower = (window.CATALOG?.roles || ROLES).map(r=>r.toLowerCase());
-      rolesLower.forEach(role=>{
-        text = text.replace(new RegExp(`#${role}:(\\d+)`,"gi"), (m,idx)=>{
-          const html = personaHTML(role, parseInt(idx,10)); return html || m;
-        });
-      });
-      // secuestro: solo se inserta donde pones #secuestro
-      const secHtml = formatSecuestroHtml(($("#secuestroTexto")?.value)||"");
-      if(text.includes("#secuestro")) text = text.replace(/#secuestro/gi, secHtml);
-      return text;
-    }
+  function preview(){
+    const data = buildDataFromForm();
+    const out = HRFMT.buildAll(data);
+    $("#previewHtml").innerHTML = out.html;
+    return out;
+  }
 
-    function htmlToWA(html){
-      let s = html || "";
-      // em+u combinados -> _..._
-      s = s.replace(/<em><u>(.*?)<\/u><\/em>/gis, '_$1_');
-      s = s.replace(/<u><em>(.*?)<\/em><\/u>/gis, '_$1_');
-      // negrita y cursiva simples
-      s = s.replace(/<strong>(.*?)<\/strong>/gis, '*$1*');
-      s = s.replace(/<em>(.*?)<\/em>/gis, '_$1_');
-      // subrayado restante se elimina (ya lo cubre cursiva)
-      s = s.replace(/<u>(.*?)<\/u>/gis, '$1');
-      // quitar cualquier etiqueta
-      s = s.replace(/<[^>]+>/g, '');
-      // compactar saltos: 1 salto => espacio, 2 o más => 2
-      s = s.replace(/\r/g,'').replace(/\n{3,}/g,'\n\n').replace(/([^\n])\n([^\n])/g,'$1 $2');
-      return s.trim();
-    }
+  // ===== Hooks UI =====
+  $("#addCivil").onclick = ()=> CIV.add();
+  $("#addFuerza").onclick = ()=> FZA.add();
+  $("#addObjeto").onclick = ()=> OBJ.add();
 
-    // Generar vistas
-    function generar(){
-      const estado = ($("#estado")?.value||"no");
-      const compuesto = tituloCompuesto();
-      const compuestoWord = compuesto.split(" – ").map((x,i)=> i<2? x : x.toUpperCase()).join(" – "); // COMISARÍA + CARÁTULA en mayúscula
-      const subtitulo = ($("#subtitulo")?.value||"").trim();
+  $("#generar").onclick = preview;
+  document.addEventListener("keydown",(e)=>{ if(e.ctrlKey && e.key==="Enter"){ e.preventDefault(); preview(); } });
 
-      const cuerpoHtml = replacePlaceholders(($("#cuerpo")?.value||"").trim());
+  $("#copiarWA").onclick = ()=>{ const out=preview(); navigator.clipboard.writeText(out.waLong).then(()=>alert("Copiado para WhatsApp")); };
 
-      // Preview HTML
-      const colorClase = (estado==='si')?'blue':'red';
-      $("#preview").innerHTML = `<strong>${compuestoWord}</strong>\n<span class="badge ${colorClase}"><strong>${subtitulo}</strong></span>\n\n${cuerpoHtml}`;
+  $("#descargarWord").onclick = async ()=>{
+    try{ await HRFMT.downloadDocx(buildDataFromForm(), (window.docx||{})); }
+    catch(e){ console.error(e); showErr(e.message||e); }
+  };
 
-      // WhatsApp (como tu ejemplo)
-      const waHeader1 = `*${compuesto}*`;
-      const waHeader2 = `*${subtitulo}*`;
-      const waBody = htmlToWA(cuerpoHtml);
-      const waShort = `${waHeader1}\n${waHeader2}`;
-      const waLong  = `${waShort}\n\n${waBody}`;
-      $("#previewWaShort").textContent = waShort;
-      $("#previewWaLong").textContent  = waLong;
+  $("#exportCSV1").onclick = ()=>{ HRFMT.downloadCSV([buildDataFromForm()]); };
 
-      return {estado, subtitulo, waShort, waLong, cuerpoHtml, compuesto, compuestoWord};
-    }
-    $("#generar").onclick = generar;
-    document.addEventListener("keydown",(e)=>{ if(e.ctrlKey && e.key==="Enter"){ e.preventDefault(); generar(); } });
+  // ===== Casos: guardar / actualizar / borrar / cargar / export múltiple =====
+  const selectedRadio = ()=> { const r = document.querySelector('input[name="caseSel"]:checked'); return r ? r.getAttribute("data-id") : null; };
+  const selectedChecks = ()=> $$(".caseCheck:checked").map(x=>x.getAttribute("data-id"));
 
-    $("#copiarWACorto").onclick = ()=>{ const d=generar(); navigator.clipboard.writeText(d.waShort).then(()=>alert("Copiado (corta)")); };
-    $("#copiarWALargo").onclick = ()=>{ const d=generar(); navigator.clipboard.writeText(d.waLong).then(()=>alert("Copiado (larga)")); };
+  $("#saveCase").onclick = ()=>{
+    const name = ($("#caseName").value||"").trim() || "Hecho sin nombre";
+    const snap = buildDataFromForm(); snap.id = freshId(); snap.name=name;
+    const cases = getCases(); cases.push(snap); setCases(cases); renderCases(); alert("Guardado.");
+  };
+  $("#updateCase").onclick = ()=>{
+    const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para actualizar."); return; }
+    const cases = getCases(); const idx = cases.findIndex(c=>c.id===id); if(idx<0){ alert("No encontrado"); return; }
+    const snap = buildDataFromForm(); snap.id = id; snap.name = cases[idx].name;
+    cases[idx] = snap; setCases(cases); renderCases(); alert("Actualizado.");
+  };
+  $("#deleteCase").onclick = ()=>{
+    const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para borrar."); return; }
+    const cases = getCases().filter(c=>c.id!==id); setCases(cases); renderCases();
+  };
+  $("#loadSelected").onclick = ()=>{
+    const id = selectedRadio(); if(!id){ alert("Elegí un hecho (radio) para cargar."); return; }
+    const c = getCases().find(x=>x.id===id); if(!c){ alert("No encontrado"); return; }
+    loadSnapshot(c); renderCases(); preview(); alert("Cargado.");
+  };
 
-    // Word (docx v8): 1) línea compuesta en negrita (MAYÚS en Dep/Carátula), 2) subtítulo color, 3) cuerpo justificado
-    $("#descargarWord").onclick = async ()=>{
-      try{
-        const d = generar();
-        const docx = window.docx; if(!docx || !docx.Document) throw new Error("Librería docx no cargada");
+  $("#exportCSV").onclick = ()=>{
+    const ids = selectedChecks(); if(!ids.length){ alert("Seleccioná al menos un hecho (checkbox)."); return; }
+    const list = getCases().filter(c=>ids.includes(c.id));
+    HRFMT.downloadCSV(list);
+  };
 
-        const JUST = docx.AlignmentType.JUSTIFIED;
-        const toRuns = (html)=>{
-          const parts = (html||"").split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
-          let B=false,I=false,U=false; const runs=[];
-          for(const part of parts){
-            if(part==="<strong>"){B=true;continue;}
-            if(part==="</strong>"){B=false;continue;}
-            if(part==="<em>"){I=true;continue;}
-            if(part==="</em>"){I=false;continue;}
-            if(part==="<u>"){U=true;continue;}
-            if(part==="</u>"){U=false;continue;}
-            if(part){ runs.push(new docx.TextRun({text:part,bold:B,italics:I,underline:U?{}:undefined})); }
-          }
-          return runs;
-        };
-        const bodyParas = (d.cuerpoHtml||"").split(/\n\n+/).map(p=> new docx.Paragraph({children:toRuns(p), alignment:JUST, spacing:{after:200}}));
-        const colorSub = (d.estado==='si') ? "2e86ff" : "ff4d4d";
+  $("#downloadWordMulti").onclick = async ()=>{
+    const ids = selectedChecks(); if(!ids.length){ alert("Seleccioná al menos un hecho (checkbox)."); return; }
+    // Armamos un DOCX con varios hechos, usando el motor para cada uno
+    const docx = window.docx||{}; const { Document, Packer, TextRun, Paragraph, AlignmentType } = docx;
+    if(!Document){ showErr("docx no cargada"); return; }
 
-        const doc = new docx.Document({
-          sections: [{
-            children: [
-              new docx.Paragraph({children:[new docx.TextRun({text:d.compoundWord || d.compuestoWord, bold:true})]}),
-              new docx.Paragraph({children:[new docx.TextRun({text:d.subtitulo, bold:true, color:colorSub})]}),
-              new docx.Paragraph({text:""}),
-              ...bodyParas
-            ]
-          }]
-        });
-
-        const pu = ($("#pu")?.value||"sinPU").replace(/\s+/g,'_');
-        const blob = await docx.Packer.toBlob(doc);
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `Hecho_Relevante_${pu}.docx`; a.click();
-      }catch(e){ console.error(e); showErr(e.message||e); }
+    const JUST = AlignmentType.JUSTIFIED;
+    const toRuns = (html)=>{
+      const parts=(html||"").split(/(<\/?strong>|<\/?em>|<\/?u>)/g);
+      let B=false,I=false,U=false; const runs=[];
+      for(const part of parts){
+        if(part==="<strong>"){B=true;continue;}
+        if(part==="</strong>"){B=false;continue;}
+        if(part==="<em>"){I=true;continue;}
+        if(part==="</em>"){I=false;continue;}
+        if(part==="<u>"){U=true;continue;}
+        if(part==="</u>"){U=false;continue;}
+        if(part){ runs.push(new TextRun({text:part,bold:B,italics:I,underline:U?{}:undefined})); }
+      }
+      return runs;
     };
 
-    // Semilla mínima (podés borrar)
-    if(!state.personas.length){
-      state.personas.push({rol:ROLES[0], nombre:"edgardo marcelo", apellido:"lemos", edad:"62", domicilio:"agapantus 1237", ciudad:"mar del plata"});
-      state.cuerpo = "Fecha, siendo las 17:15 hs., entrevistan con #victima:0, sustrayendo #secuestro .";
-      state.secuestroTexto = "Celular iPhone 13, $ 2.000.000 y USD 20.000.";
-      $("#cuerpo").value = state.cuerpo; $("#secuestroTexto").value = state.secuestroTexto; save(); renderPersonas(); renderTitlePreview();
-    }
+    const selected = getCases().filter(c=>ids.includes(c.id));
+    const children = [];
+    selected.forEach((snap,i)=>{
+      const built = HRFMT.buildAll(snap);
+      children.push(new Paragraph({ children:[ new TextRun({ text: built.forDocx.titulo, bold:true }) ] }));
+      children.push(new Paragraph({ children:[ new TextRun({ text: built.forDocx.subtitulo, bold:true, color: built.forDocx.color }) ] }));
+      (built.forDocx.bodyHtml||"").split(/\n\n+/).forEach(p=>{
+        children.push(new Paragraph({ children: toRuns(p), alignment: JUST, spacing:{after:200} }));
+      });
+      if(i !== selected.length-1) children.push(new Paragraph({ text:"" })); // separador
+    });
+
+    const doc = new Document({
+      styles:{ default:{ document:{ run:{ font:"Arial", size:24 }, paragraph:{ spacing:{ after:120 } } } } },
+      sections:[{ children }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`Hechos_Relevantes_${new Date().toISOString().slice(0,10)}.docx`; a.click();
+  };
+
+  function loadSnapshot(s){
+    $("#g_fecha").value = s.generales?.fecha_hora||"";
+    $("#g_pu").value    = s.generales?.pu||"";
+    $("#g_dep").value   = s.generales?.dependencia||"";
+    $("#g_car").value   = s.generales?.caratula||"";
+    $("#g_sub").value   = s.generales?.subtitulo||"";
+    $("#g_ok").value    = s.generales?.esclarecido ? "si" : "no";
+    CIV.store = (s.civiles||[]).slice(); CIV.render();
+    FZA.store = (s.fuerzas||[]).slice(); FZA.render();
+    OBJ.store = (s.objetos||[]).slice(); OBJ.render();
+    $("#cuerpo").value  = s.cuerpo||"";
+    renderTitlePreview();
   }
+
+  function renderTitlePreview(){
+    const t = [$("#g_fecha").value,$("#g_pu").value,$("#g_dep").value,$("#g_car").value].filter(Boolean).join(" – ");
+    const sub = $("#g_sub").value; const ok = ($("#g_ok").value==="si");
+    $("#tituloCompuesto").innerHTML = `<strong>${t.toUpperCase()}</strong>`;
+    $("#subCompuesto").innerHTML = `<span class="badge ${ok?'blue':'red'}"><strong>${sub}</strong></span>`;
+  }
+  ["g_fecha","g_pu","g_dep","g_car","g_sub","g_ok"].forEach(id=>{
+    const n=$("#"+id); if(n) n.addEventListener("input", renderTitlePreview);
+  });
+
+  // inicial
+  renderCases();
 })();
