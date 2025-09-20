@@ -1,4 +1,4 @@
-// Tabs mínimos: usa data-tabs + [data-tab]
+// Tabs mínimos
 document.addEventListener("DOMContentLoaded", ()=>{
   document.querySelectorAll("[data-tabs]").forEach(root=>{
     const buttons = root.querySelectorAll(".tab");
